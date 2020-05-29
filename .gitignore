@@ -1,0 +1,13 @@
+*.pyc
+*.csv
+*.json
+*.png
+*.hdf5
+*.npy
+*.txt
+*.zip
+*.pickle
+
+migrations/
+__pycache__/
+config.py
