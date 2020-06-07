@@ -99,27 +99,45 @@ class CreateGoats(graphene.Mutation):
         return CreateGoats(goats=new_goats)
 
 
-class CreateTransaction(graphene.Mutation):
+class TakeGoat(graphene.Mutation):
     class Arguments:
-        from_user = graphene.String()
-        to_user = graphene.String()
-        goat = graphene.String()
+        from_user = graphene.Int()
+        to_user = graphene.Int()
+        goat_id = graphene.Int()
 
     transaction = graphene.Field(TransactionObject)
+    goat = graphene.Field(GoatObject)
 
-    def mutate(self, info, from_user, to_user, goat):
-        new_transaction = Transaction(from_user, to_user, goat)
+    def mutate(self, info, from_user, to_user, goat_id):
+        # create transaction
+        new_transaction = Transaction(from_user, to_user, goat_id)
         db.session.add(new_transaction)
-        db.session.commit()
-        return CreateTransaction(transaction=new_transaction)
 
-# TODO:
-# take goat mutation
-# give goat mutation
+        # update goat
+        db.session.update(Goat).where(Goat.id == goat_id).values(owner=to_user)
+
+        # commit
+        db.session.commit()
+        return TakeGoat(transaction=new_transaction)
+
+class GiveGoat(TakeGoat):
+    def mutate(self, info, from_user, to_user, goat_id):
+        # create transaction
+        new_transaction = Transaction(from_user, to_user, goat_id)
+        db.session.add(new_transaction)
+
+        # update goat
+        db.session.update(Goat).where(Goat.id == goat_id).values(owner=to_user)
+
+        # commit
+        db.session.commit()
+        return GiveGoat(transaction=new_transaction)
 
 class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
     create_goats = CreateGoats.Field()
-    create_transaction = CreateTransaction.Field()
+
+    take_goat = TakeGoat.Field()
+    give_goat = GiveGoat.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation, types=[UserObject, GoatObject, TransactionObject])
