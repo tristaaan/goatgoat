@@ -22,4 +22,9 @@ app.add_url_rule(
     )
 )
 db.init_app(app)
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
+
 migrate = Migrate(app, db)
