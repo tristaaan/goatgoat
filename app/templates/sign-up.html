@@ -1,10 +1,63 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
-  <form onsubmit="">
+  <form id="signup-form">
+      <input type="email" name="email" placeholder="email">
       <input type="text" name="username" placeholder="username">
       <input type="password" name="password" placeholder="password">
       <input type="password" name="confirmPassword" placeholder="confirm password">
-      <button>Goat up</button>
+      <button type="button">Goat up</button>
+      <span class="error"></span>
   </form>
+  <span class="error"></span>>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const form = document.getElementById('signup-form');
+    const submitButton = document.querySelector('button');
+    const errorField = document.querySelector('.error');
+
+    const submitForm = (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const data = {};
+      for (const [name,value] of formData) {
+        data[name] = value;
+      }
+      const {email, username, password, confirmPassword} = data;
+      if (password !== confirmPassword) {
+        errorField.textContent = 'Passwords do not match';
+      } else {
+        sendQuery(
+          `mutation CreateUser($username:String!, $email:String!, $password:String!, $confirmPassword:String!) {
+            createUser(email:$email, username:$username, password:$password, confirmPassword:$confirmPassword) {
+               user {
+                id
+                name
+                email
+              }
+            }
+          }`,
+          { email, username, password, confirmPassword },
+          'CreateUser'
+        )
+        .then(successCallback)
+        .catch(errorCallback);
+      }
+    };
+
+    function successCallback(json) {
+      errorField.textContent = '';
+      window.location = '/login';
+    }
+
+    function errorCallback(json) {
+      console.log(json, json.errors[0].message);
+      errorField.textContent = json.errors[0].message;
+    }
+
+    form.onsubmit = submitForm;
+    submitButton.onclick = submitForm;
+  </script>
 {% endblock %}

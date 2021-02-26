@@ -1,7 +1,17 @@
-import graphene
-from .models import db, User, Goat, Transaction
-from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
+import uuid
+import datetime
 
+import jwt
+import graphene
+
+from functools import wraps
+from graphql import GraphQLError
+from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
+from sqlalchemy.exc import IntegrityError
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from .models import db, User, Goat, Transaction
+from config import SECRET_KEY
 
 # Schema Objects
 class UserObject(SQLAlchemyObjectType):
@@ -28,9 +38,10 @@ class Query(graphene.ObjectType):
 
     # USERs
     all_users = SQLAlchemyConnectionField(UserObject)
-    user_by_id = graphene.Field(lambda: UserObject, id=graphene.Int())
-    user_by_name = graphene.Field(lambda: UserObject, name=graphene.String())
-    user_by_email = graphene.Field(lambda: UserObject, email=graphene.String())
+    user_by_id = graphene.Field(UserObject, id=graphene.Int())
+    user_by_name = graphene.Field(UserObject, name=graphene.String())
+    user_by_email = graphene.Field(UserObject, email=graphene.String())
+    login = graphene.Field(UserObject, name=graphene.String(), password=graphene.String())
     def resolve_user_by_id(self, info, **kwargs):
         _id = kwargs.get('id')
         return User.query.filter_by(id=_id).first()
@@ -42,6 +53,24 @@ class Query(graphene.ObjectType):
     def resolve_user_by_email(self, info, **kwargs):
         email = kwargs.get('email')
         return User.query.filter_by(email=email).first()
+
+    def login(self, info, **kwargs):
+        name = kwargs.get('name')
+        password = kwargs.get('password')
+        user = User.query.filter_by(name=name).first()
+        if user is None:
+            return { 'error': 'wrong password or user not found'}
+
+        if check_password_hash(user.password, auth.password):
+            token = jwt.encode({
+                    'id': user.id,
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=72)
+                },
+                SECRET_KEY
+            )
+            return {'token' : token.decode('UTF-8')}
+
+        return { 'error': 'wrong password or user not found'}
 
     # GOATs
     all_goats = SQLAlchemyConnectionField(GoatObject)
@@ -68,13 +97,29 @@ class CreateUser(graphene.Mutation):
         email = graphene.String(required=True)
         username = graphene.String(required=True)
         password = graphene.String(required=True)
+        confirm_password = graphene.String(required=True)
 
     user = graphene.Field(UserObject)
 
-    def mutate(self, info, email, username, password):
-        new_user = User(email, username, password)
+    def mutate(self, info, email, username, password, confirm_password):
+        if password != confirm_password:
+            raise GraphQLError('Passwords do not match')
+
+        if db.session.query(User).filter(User.name == username).first():
+            raise GraphQLError('Username is already in use')
+
+        if db.session.query(User).filter(User.email == email).first():
+            raise GraphQLError('An account with this email already exists')
+
+        hashed_password = generate_password_hash(password, method='sha256')
+        new_user = User(email, username, hashed_password)
         db.session.add(new_user)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            raise GraphQLError(e.message)
+
         for i in range(5):
             goat = Goat(new_user.id)
             db.session.add(goat)

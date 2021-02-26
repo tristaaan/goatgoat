@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template
 from sqlalchemy.sql import select, func
 
-views = Blueprint('views', __name__,
-                        template_folder='templates')
+views = Blueprint('views', __name__, template_folder='templates')
 
 @views.route('/')
 def index():

@@ -1,6 +1,11 @@
+import datetime
+from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
+
+def now():
+    return datetime.datetime.now()
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -24,6 +29,7 @@ class User(db.Model):
 class Goat(db.Model):
   __tablename__ = 'goats'
   id = db.Column('goat_id', db.Integer, primary_key=True)
+  created = db.Column('created', db.DateTime, default=now)
   original_owner = db.Column('original_owner', db.Integer, db.ForeignKey("users.user_id"), nullable=False)
   owner = db.Column('owner', db.Integer, db.ForeignKey("users.user_id"), nullable=False)
 
@@ -39,7 +45,7 @@ class Transaction(db.Model):
   from_user = db.Column('from', db.Integer, db.ForeignKey("users.user_id"), nullable=False)
   to_user = db.Column('to', db.Integer, db.ForeignKey("users.user_id"), nullable=False)
   goat = db.Column('goat_id', db.Integer, db.ForeignKey("goats.goat_id"), nullable=False)
-  when = db.Column('timestamp', db.DateTime)
+  when = db.Column('timestamp', db.DateTime, default=now)
 
   def __init__(self, from_user, to_user, goat):
     self.from_user = from_user
