@@ -7,6 +7,16 @@ import graphene
 from functools import wraps
 from graphql import GraphQLError
 from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
+from flask_graphql_auth import (
+    AuthInfoField,
+    GraphQLAuth,
+    get_jwt_identity,
+    create_access_token,
+    create_refresh_token,
+    query_header_jwt_required,
+    mutation_jwt_refresh_token_required,
+    mutation_jwt_required
+)
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -41,7 +51,7 @@ class Query(graphene.ObjectType):
     user_by_id = graphene.Field(UserObject, id=graphene.Int())
     user_by_name = graphene.Field(UserObject, name=graphene.String())
     user_by_email = graphene.Field(UserObject, email=graphene.String())
-    login = graphene.Field(UserObject, name=graphene.String(), password=graphene.String())
+
     def resolve_user_by_id(self, info, **kwargs):
         _id = kwargs.get('id')
         return User.query.filter_by(id=_id).first()
@@ -53,24 +63,6 @@ class Query(graphene.ObjectType):
     def resolve_user_by_email(self, info, **kwargs):
         email = kwargs.get('email')
         return User.query.filter_by(email=email).first()
-
-    def login(self, info, **kwargs):
-        name = kwargs.get('name')
-        password = kwargs.get('password')
-        user = User.query.filter_by(name=name).first()
-        if user is None:
-            return { 'error': 'wrong password or user not found'}
-
-        if check_password_hash(user.password, auth.password):
-            token = jwt.encode({
-                    'id': user.id,
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=72)
-                },
-                SECRET_KEY
-            )
-            return {'token' : token.decode('UTF-8')}
-
-        return { 'error': 'wrong password or user not found'}
 
     # GOATs
     all_goats = SQLAlchemyConnectionField(GoatObject)
@@ -127,6 +119,29 @@ class CreateUser(graphene.Mutation):
         return CreateUser(user=new_user)
 
 
+class LoginUser(graphene.Mutation):
+    class Arguments:
+        name = graphene.String()
+        password = graphene.String()
+
+    access_token = graphene.String()
+    refresh_token = graphene.String()
+
+    def mutate(self, info, name, password):
+        invalid_message = 'Invalid username or password'
+        user = User.query.filter_by(name=name).first()
+        if user is None:
+            raise GraphQLError(invalid_message)
+
+        if check_password_hash(user.pw, password):
+            return LoginUser(
+                access_token = create_access_token(name),
+                refresh_token = create_refresh_token(name)
+            )
+
+        raise GraphQLError(invalid_message)
+
+
 class CreateGoats(graphene.Mutation):
     class Arguments:
         count = graphene.String()
@@ -180,6 +195,7 @@ class GiveGoat(TakeGoat):
 
 class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
+    login_user = LoginUser.Field()
     create_goats = CreateGoats.Field()
 
     take_goat = TakeGoat.Field()

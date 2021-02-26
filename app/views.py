@@ -25,6 +25,6 @@ def forgot():
   return render_template("forgot.html")
 
 # USER
-@views.route("/user/<username>")
+@views.route("/<username>")
 def userpage(username):
-  return render_template("user.html")
+  return render_template("user.html", username=username)

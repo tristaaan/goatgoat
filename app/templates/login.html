@@ -1,11 +1,54 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
-  <form onsubmit="">
+  <form id="signup-form">
       <input type="text" name="username" placeholder="username">
       <input type="password" name="password" placeholder="password">
-      <button>Login</button>
+      <button type="button">Login</button>
   </form>
+  <span class="error"></span>
 {% endblock %}
 
+{% block scripts %}
+  <script type="application/javascript">
+    const form = document.getElementById('signup-form');
+    const submitButton = document.querySelector('button');
+    const errorField = document.querySelector('.error');
+    let loggedInUsername;
 
+    const submitForm = (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const data = {};
+      for (const [name,value] of formData) {
+        data[name] = value;
+      }
+      const {username, password} = data;
+      loggedInUsername = username;
+      sendQuery(
+        `mutation LoginUser($username:String!, $password:String!) {
+          loginUser(name:$username, password:$password) {
+            accessToken,
+            refreshToken
+          }
+        }`,
+        {username, password},
+        'LoginUser'
+      ).then(successCallback)
+      .catch(errorCallback);
+    };
+
+    function successCallback(json) {
+        errorField.textContent = '';
+        window.location = `/${loggedInUsername}`;
+      }
+
+    function errorCallback(json) {
+      console.log(json, json.errors[0].message);
+      errorField.textContent = json.errors[0].message;
+    }
+
+    form.onsubmit = submitForm;
+    submitButton.onclick = submitForm;
+  </script>
+{% endblock %}

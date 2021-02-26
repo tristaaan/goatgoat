@@ -4,7 +4,6 @@
 *.png
 *.hdf5
 *.npy
-*.txt
 *.zip
 *.pickle
 

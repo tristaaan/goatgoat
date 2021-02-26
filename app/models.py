@@ -4,26 +4,29 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+
 def now():
-    return datetime.datetime.now()
+  return datetime.datetime.now()
+
 
 class User(db.Model):
-    __tablename__ = 'users'
+  __tablename__ = 'users'
 
-    id = db.Column('user_id', db.Integer, primary_key=True)
-    email = db.Column('email', db.String(96), unique=True, nullable=False)
-    name = db.Column('name', db.String(64), unique=True, nullable=False)
-    pw = db.Column('password', db.String(128), nullable=False)
-    pwResetToken = db.Column('pw_reset_token', db.String, nullable=True)
-    pwResetExpires = db.Column('pw_reset_expires', db.DateTime, nullable=True)
+  id = db.Column('user_id', db.Integer, primary_key=True)
+  email = db.Column('email', db.String(96), unique=True, nullable=False)
+  name = db.Column('name', db.String(64), unique=True, nullable=False)
+  pw = db.Column('password', db.String(128), nullable=False)
+  pwResetToken = db.Column('pw_reset_token', db.String, nullable=True)
+  pwResetExpires = db.Column('pw_reset_expires', db.DateTime, nullable=True)
+  # goats = relationship('Goat', backref='owner', cascade="all, delete-orphan")
 
-    def __init__(self, email, name, password):
-      self.email = email
-      self.name = name
-      self.pw = password
+  def __init__(self, email, name, password):
+    self.email = email
+    self.name = name
+    self.pw = password
 
-    def __repr__(self):
-        return '%d' % self.id
+  def __repr__(self):
+      return '%d' % self.id
 
 
 class Goat(db.Model):
@@ -34,8 +37,8 @@ class Goat(db.Model):
   owner = db.Column('owner', db.Integer, db.ForeignKey("users.user_id"), nullable=False)
 
   def __init__(self, owner):
-      self.owner = owner
-      self.original_owner = owner
+    self.owner = owner
+    self.original_owner = owner
 
 
 class Transaction(db.Model):
