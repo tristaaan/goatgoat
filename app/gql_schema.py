@@ -2,6 +2,7 @@ import uuid
 import datetime
 
 import jwt
+import time
 import graphene
 
 from functools import wraps
@@ -134,9 +135,11 @@ class LoginUser(graphene.Mutation):
             raise GraphQLError(invalid_message)
 
         if check_password_hash(user.pw, password):
+            # expires in 5 days
+            # ideally a refreshToken is issued
+            claims = {'exp': int(time.time()) + (60 * 60 * 24 * 5)}
             return LoginUser(
-                access_token = create_access_token(name),
-                refresh_token = create_refresh_token(name)
+                access_token = create_access_token(name, claims)
             )
 
         raise GraphQLError(invalid_message)

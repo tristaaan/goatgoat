@@ -40,6 +40,8 @@
 
     function successCallback(json) {
         errorField.textContent = '';
+        setCookie('token', json.data.loginUser.accessToken);
+        console.log('logged in!? ');
         window.location = `/${loggedInUsername}`;
       }
 

@@ -6,9 +6,28 @@
   <script type="text/javascript" src="{{url_for('static', filename='gqllite.js')}}"></script>
 </head>
 <body>
+  <nav>
+    <ul>
+      <li><a href="/">Home</a></li>
+      {% if logged_in %}
+        <li><a href="#" id="logout">Logout</a></li>
+      {% else %}
+        <li><a href="/sign-up">Sign-up</a></li>
+        <li><a href="/login">Login</a></li>
+      {% endif %}
+    </ul>
+  </nav>
   <main class="content-container">
-      {% block content %}{% endblock %}
+    {% block content %}{% endblock %}
   </main>
+  <script type="text/javascript">
+    document
+      .getElementById('logout')
+      .addEventListener('click', (e) => {
+        deleteCookie('token');
+        window.location.reload(false);
+      });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
