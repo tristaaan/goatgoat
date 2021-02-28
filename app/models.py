@@ -18,7 +18,7 @@ class User(db.Model):
   pw = db.Column('password', db.String(128), nullable=False)
   pwResetToken = db.Column('pw_reset_token', db.String, nullable=True)
   pwResetExpires = db.Column('pw_reset_expires', db.DateTime, nullable=True)
-  # goats = relationship('Goat', backref='owner', cascade="all, delete-orphan")
+  # goats = relationship('goats', backref='owner', cascade='all, delete-orphan')
 
   def __init__(self, email, name, password):
     self.email = email
@@ -33,8 +33,8 @@ class Goat(db.Model):
   __tablename__ = 'goats'
   id = db.Column('goat_id', db.Integer, primary_key=True)
   created = db.Column('created', db.DateTime, default=now)
-  original_owner = db.Column('original_owner', db.Integer, db.ForeignKey("users.user_id"), nullable=False)
-  owner = db.Column('owner', db.Integer, db.ForeignKey("users.user_id"), nullable=False)
+  original_owner = db.Column('original_owner', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  owner = db.Column('owner', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
 
   def __init__(self, owner):
     self.owner = owner
@@ -45,9 +45,9 @@ class Transaction(db.Model):
   __tablename__ = 'transactions'
 
   id = db.Column(db.Integer, primary_key=True)
-  from_user = db.Column('from', db.Integer, db.ForeignKey("users.user_id"), nullable=False)
-  to_user = db.Column('to', db.Integer, db.ForeignKey("users.user_id"), nullable=False)
-  goat = db.Column('goat_id', db.Integer, db.ForeignKey("goats.goat_id"), nullable=False)
+  from_user = db.Column('from', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  to_user = db.Column('to', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  goat = db.Column('goat_id', db.Integer, db.ForeignKey('goats.goat_id'), nullable=False)
   when = db.Column('timestamp', db.DateTime, default=now)
 
   def __init__(self, from_user, to_user, goat):

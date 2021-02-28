@@ -72,6 +72,15 @@ class Query(graphene.ObjectType):
         _id = kwargs.get('id')
         return Goat.query.filter(Goat.owner == _id).all()
 
+    all_goats = SQLAlchemyConnectionField(GoatObject)
+    goats_by_username = graphene.List(GoatObject, name=graphene.String())
+    def resolve_goats_by_username(self, info, **kwargs):
+        name = kwargs.get('name')
+        user = User.query.filter_by(name=name).first()
+        return Goat.query.filter(
+            Goat.owner == user.id
+        ).all()
+
     # TRANSACTIONs
     all_transactions = SQLAlchemyConnectionField(TransactionObject)
     transactions_from = graphene.List(TransactionObject, from_user=graphene.Int())
@@ -204,4 +213,8 @@ class Mutation(graphene.ObjectType):
     take_goat = TakeGoat.Field()
     give_goat = GiveGoat.Field()
 
-schema = graphene.Schema(query=Query, mutation=Mutation, types=[UserObject, GoatObject, TransactionObject])
+schema = graphene.Schema(
+    query=Query,
+    mutation=Mutation,
+    types=[UserObject, GoatObject, TransactionObject]
+)
