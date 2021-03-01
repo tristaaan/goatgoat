@@ -1,6 +1,8 @@
 import datetime
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
+from sqlalchemy.ext.declarative import declarative_base
 from flask_sqlalchemy import SQLAlchemy
+
 
 db = SQLAlchemy()
 
@@ -18,7 +20,6 @@ class User(db.Model):
   pw = db.Column('password', db.String(128), nullable=False)
   pwResetToken = db.Column('pw_reset_token', db.String, nullable=True)
   pwResetExpires = db.Column('pw_reset_expires', db.DateTime, nullable=True)
-  # goats = relationship('goats', backref='owner', cascade='all, delete-orphan')
 
   def __init__(self, email, name, password):
     self.email = email
@@ -33,12 +34,24 @@ class Goat(db.Model):
   __tablename__ = 'goats'
   id = db.Column('goat_id', db.Integer, primary_key=True)
   created = db.Column('created', db.DateTime, default=now)
-  original_owner = db.Column('original_owner', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-  owner = db.Column('owner', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  original_owner_id = db.Column('original_owner_id', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  owner_id = db.Column('owner_id', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  owner = relationship(
+    User,
+    foreign_keys=[owner_id],
+    backref=backref('goats',
+      uselist=True,
+      cascade='delete,all'
+    )
+  )
+  original_owner = relationship(
+    User,
+    foreign_keys=[original_owner_id]
+  )
 
   def __init__(self, owner):
-    self.owner = owner
-    self.original_owner = owner
+    self.owner_id = owner
+    self.original_owner_id = owner
 
 
 class Transaction(db.Model):

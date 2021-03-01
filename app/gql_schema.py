@@ -70,16 +70,7 @@ class Query(graphene.ObjectType):
     goats_by_owner_id = graphene.List(GoatObject, id=graphene.Int())
     def resolve_goats_by_owner_id(self, info, **kwargs):
         _id = kwargs.get('id')
-        return Goat.query.filter(Goat.owner == _id).all()
-
-    all_goats = SQLAlchemyConnectionField(GoatObject)
-    goats_by_username = graphene.List(GoatObject, name=graphene.String())
-    def resolve_goats_by_username(self, info, **kwargs):
-        name = kwargs.get('name')
-        user = User.query.filter_by(name=name).first()
-        return Goat.query.filter(
-            Goat.owner == user.id
-        ).all()
+        return Goat.query.filter(Goat.owner_id == _id).all()
 
     # TRANSACTIONs
     all_transactions = SQLAlchemyConnectionField(TransactionObject)
@@ -157,14 +148,14 @@ class LoginUser(graphene.Mutation):
 class CreateGoats(graphene.Mutation):
     class Arguments:
         count = graphene.String()
-        owner = graphene.Int()
+        owner_id = graphene.Int()
 
     goats = graphene.List(GoatObject)
 
-    def mutate(self, info, count, owner):
+    def mutate(self, info, count, owner_id):
         new_goats = []
         for i in range(count):
-            new_goat = Goat(owner)
+            new_goat = Goat(owner_id)
             db.session.add(new_goat)
             new_goats.push(GoatObject(new_goat))
         db.session.commit()
@@ -186,7 +177,7 @@ class TakeGoat(graphene.Mutation):
         db.session.add(new_transaction)
 
         # update goat
-        db.session.update(Goat).where(Goat.id == goat_id).values(owner=to_user)
+        db.session.update(Goat).where(Goat.id == goat_id).values(owner_id=to_user)
 
         # commit
         db.session.commit()
@@ -199,7 +190,7 @@ class GiveGoat(TakeGoat):
         db.session.add(new_transaction)
 
         # update goat
-        db.session.update(Goat).where(Goat.id == goat_id).values(owner=to_user)
+        db.session.update(Goat).where(Goat.id == goat_id).values(owner_id=to_user)
 
         # commit
         db.session.commit()

@@ -3,8 +3,35 @@
 {% block content %}
   <h1>Welcome {{ username }}</h1>
   <p>It someone else!</p>
+  <canvas id="field"></canvas>
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript">
+  const ctx = document.getElementById('field').getContext('2d');
+  sendQuery(`
+    {
+      userByName(name: {{username}}) {
+        goats {
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    }`
+  ).then(successCallback)
+  .catch(errorCallback);
 
+  function successCallback(json) {
+    json.data.userByName.goats.edges.forEach((el) => {
+      console.log(el.node.id);
+    });
+  }
+
+  function errorCallback(err) {
+    console.log('something went wrong', err);
+  }
+</script>
 {% endblock %}
