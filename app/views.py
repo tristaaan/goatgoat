@@ -48,6 +48,17 @@ def forgot():
 
 
 # USER
+@views.route('/settings', methods=['GET'])
+def user_settings():
+  token = request.cookies.get('token', None)
+  if token is not None:
+    data = get_jwt_data(token, 'access')
+    username = data['identity']
+    return render_template('settings.html', username=username, logged_in=True)
+
+  return redirect(f'/{username}', code=302)
+
+
 @views.route('/<username>', methods=['GET'])
 def userpage(username):
   token = request.cookies.get('token', None)
@@ -63,5 +74,3 @@ def userpage(username):
 
   # visiting a user's page when not logged in
   return render_template('non-logged-in-userpage.html', username=username, logged_in=False)
-
-

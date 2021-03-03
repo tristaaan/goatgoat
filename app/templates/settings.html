@@ -1,0 +1,35 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+  <h1>Settings</h1>
+  <label for='email'>Email: <input type="email" /></label>
+  <button id="update-email">Update email</button>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+  const updateEmail = document.getElementById('update-email');
+  const emailForm = document.querySelector('input[type=email]');
+  sendQuery(`
+    {
+      userByName(name: "{{username}}") {
+        name
+        email
+      }
+    }`
+  ).then(successCallback)
+  .catch(errorCallback);
+
+  function successCallback(json) {
+    emailForm.value = json.data.userByName.email;
+  }
+
+  function errorCallback(err) {
+    console.log('something went wrong', err);
+  }
+
+  updateEmail.addEventListener((e) => {
+
+  });
+</script>
+{% endblock %}
