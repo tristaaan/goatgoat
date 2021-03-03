@@ -14,7 +14,10 @@ async function sendQuery(query, variables = null, operationName = null) {
 }
 
 function setCookie(key, value) {
-  document.cookie = `${key}=${value}; expires=${Date.now() + (60 * 60 * 24 * 5)}`;
+  const now = new Date();
+  const expireTime = now.getTime() + (1000 * 60 * 60 * 24 * 5);
+  now.setTime(expireTime)
+  document.cookie = `${key}=${value};expires=${now.toUTCString()}`;
 }
 
 function getCookie(key) {

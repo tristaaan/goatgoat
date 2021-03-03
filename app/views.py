@@ -7,7 +7,7 @@ views = Blueprint('views', __name__, template_folder='templates')
 
 def get_credentials():
   token = request.cookies.get('token', None)
-  if token is not None:
+  if token is not None and len(token):
     return get_jwt_data(token, 'access')
   return None
 

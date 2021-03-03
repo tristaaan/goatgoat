@@ -126,7 +126,7 @@ class LoginUser(graphene.Mutation):
         password = graphene.String()
 
     access_token = graphene.String()
-    refresh_token = graphene.String()
+    # refresh_token = graphene.String()
 
     def mutate(self, info, name, password):
         invalid_message = 'Invalid username or password'
@@ -135,14 +135,34 @@ class LoginUser(graphene.Mutation):
             raise GraphQLError(invalid_message)
 
         if check_password_hash(user.pw, password):
-            # expires in 5 days
-            # ideally a refreshToken is issued
-            claims = {'exp': int(time.time()) + (60 * 60 * 24 * 5)}
             return LoginUser(
-                access_token = create_access_token(name, claims)
+                access_token = create_access_token(name)
             )
 
         raise GraphQLError(invalid_message)
+
+
+class UpdateUserEmail(graphene.Mutation):
+    class Arguments:
+        token = graphene.String()
+        new_email = graphene.String()
+
+    new_email = graphene.String()
+
+    @mutation_jwt_required
+    def mutate(self, info, new_email):
+        name = get_jwt_identity()
+        if name is not None:
+            user = User.query.filter_by(name=name).first()
+            user.email = new_email
+            try:
+                db.session.commit()
+            except IntegrityError as e:
+                db.session.rollback()
+                raise GraphQLError(e.message)
+            return UpdateUserEmail(new_email=new_email)
+
+        raise GraphQLError('invalid token')
 
 
 class CreateGoats(graphene.Mutation):
@@ -199,8 +219,9 @@ class GiveGoat(TakeGoat):
 class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
     login_user = LoginUser.Field()
-    create_goats = CreateGoats.Field()
+    update_user_email = UpdateUserEmail.Field()
 
+    create_goats = CreateGoats.Field()
     take_goat = TakeGoat.Field()
     give_goat = GiveGoat.Field()
 

@@ -28,8 +28,7 @@
       sendQuery(
         `mutation LoginUser($username:String!, $password:String!) {
           loginUser(name:$username, password:$password) {
-            accessToken,
-            refreshToken
+            accessToken
           }
         }`,
         {username, password},

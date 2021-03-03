@@ -2,14 +2,19 @@
 
 {% block content %}
   <h1>Settings</h1>
-  <label for='email'>Email: <input type="email" /></label>
-  <button id="update-email">Update email</button>
+  <div>
+    <label for="email">Email: <input type="email" name="email" /></label>
+    <button id="update-email">Update email</button>
+    <span class="email-result"></span>
+  </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script type="text/javascript">
   const updateEmail = document.getElementById('update-email');
   const emailForm = document.querySelector('input[type=email]');
+  const emailResult = document.querySelector('.email-result');
   sendQuery(`
     {
       userByName(name: "{{username}}") {
@@ -28,8 +33,29 @@
     console.log('something went wrong', err);
   }
 
-  updateEmail.addEventListener((e) => {
-
+  updateEmail.addEventListener('click', (e) => {
+    const token = getCookie('token');
+    const newEmail = emailForm.value;
+    sendQuery(
+      `mutation updateUserEmail($newEmail:String!, $token:String!) {
+        updateUserEmail(newEmail:$newEmail, token:$token) {
+          newEmail
+        }
+      }`,
+      {newEmail, token},
+      'updateUserEmail'
+    ).then((json) => {
+      emailResult.textContent = 'Email updated';
+      clearField(emailResult);
+    }).catch((json) => {
+      emailResult.textContent = json.errors[0].message;
+    });
   });
+
+  function clearField(field, timeout = 2500) {
+    setTimeout(() => {
+      field.textContent = '';
+    }, timeout);
+  }
 </script>
 {% endblock %}
