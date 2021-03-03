@@ -1,5 +1,6 @@
 import uuid
 import datetime
+import string
 
 import jwt
 import time
@@ -97,6 +98,12 @@ class CreateUser(graphene.Mutation):
     def mutate(self, info, email, username, password, confirm_password):
         if password != confirm_password:
             raise GraphQLError('Passwords do not match')
+
+        if len(set.difference(set(username.lower()), set(string.ascii_lowercase+string.digits))) > 0:
+            raise GraphQLError('Username can only have letters and numbers')
+
+        if username.lower() in ['settings', 'login', 'logout', 'forgot', 'reset', 'signup']:
+            raise GraphQLError('Invalid username')
 
         if db.session.query(User).filter(User.name == username).first():
             raise GraphQLError('Username is already in use')
