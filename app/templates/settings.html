@@ -2,12 +2,37 @@
 
 {% block content %}
   <h1>Settings</h1>
-  <div>
+  <div class="settings-cell">
     <label for="email">Email: <input type="email" name="email" /></label>
     <button id="update-email">Update email</button>
     <span class="email-result"></span>
   </div>
 
+  <div class="settings-cell">
+    <label for="password">
+      Update Password:
+      <input type="password" name="password" />
+    </label>
+    <br>
+    <label for="confirm-password">
+      Confirm Password:
+      <input type="password" name="confirm-password" />
+    </label>
+    <button id="update-password">Update password</button>
+    <span class="password-result"></span>
+  </div>
+
+  <div class="settings-cell">
+    <label for="goat">Choose your goat-vatar</label>
+    {% for i in range(5) %}
+    <label for="{{i}}">
+      {{i}}
+      <input name="{{i}}" type="radio">
+    </label>
+    {% endfor %}
+    <button id="update-goat">Update</button>
+    <span class="goat-result"></span>
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -15,6 +40,12 @@
   const updateEmail = document.getElementById('update-email');
   const emailForm = document.querySelector('input[type=email]');
   const emailResult = document.querySelector('.email-result');
+
+  const [newPasswordInput, confirmPasswordInput] =
+    document.querySelectorAll('input[type=password]');
+  const updatePassword = document.getElementById('update-password');
+  const passwordResult = document.querySelector('.password-result');
+
   sendQuery(`
     {
       userByName(name: "{{username}}") {
@@ -49,6 +80,26 @@
       clearField(emailResult);
     }).catch((json) => {
       emailResult.textContent = json.errors[0].message;
+    });
+  });
+
+  updatePassword.addEventListener('click', (e) => {
+    const token = getCookie('token');
+    const newPassword = newPasswordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+    sendQuery(
+      `mutation updateUserPassword($newPassword:String!, $confirmPassword:String!, $token:String!) {
+        updateUserPassword(newPassword:$newPassword, confirmPassword:$confirmPassword, token:$token) {
+          success
+        }
+      }`,
+      {newPassword, confirmPassword, token},
+      'updateUserPassword'
+    ).then((json) => {
+      passwordResult.textContent = 'Password updated';
+      clearField(passwordResult);
+    }).catch((json) => {
+      passwordResult.textContent = json.errors[0].message;
     });
   });
 

@@ -172,6 +172,34 @@ class UpdateUserEmail(graphene.Mutation):
         raise GraphQLError('invalid token')
 
 
+class UpdateUserPassword(graphene.Mutation):
+    class Arguments:
+        token = graphene.String()
+        new_password = graphene.String()
+        confirm_password = graphene.String()
+
+    success = graphene.Boolean()
+
+    @mutation_jwt_required
+    def mutate(self, info, new_password, confirm_password):
+        if new_password != confirm_password:
+            raise GraphQLError('Passwords do not match')
+
+        name = get_jwt_identity()
+        if name is not None:
+            hashed_password = generate_password_hash(new_password, method='sha256')
+            user = User.query.filter_by(name=name).first()
+            user.pw = hashed_password
+            try:
+                db.session.commit()
+            except IntegrityError as e:
+                db.session.rollback()
+                raise GraphQLError(e.message)
+            return UpdateUserPassword(success=True)
+
+        raise GraphQLError('invalid token')
+
+
 class CreateGoats(graphene.Mutation):
     class Arguments:
         count = graphene.String()
@@ -191,8 +219,8 @@ class CreateGoats(graphene.Mutation):
 
 class TakeGoat(graphene.Mutation):
     class Arguments:
-        from_user = graphene.Int()
-        to_user = graphene.Int()
+        from_user = graphene.String()
+        to_user = graphene.String()
         goat_id = graphene.Int()
 
     transaction = graphene.Field(TransactionObject)
@@ -210,6 +238,7 @@ class TakeGoat(graphene.Mutation):
         db.session.commit()
         return TakeGoat(transaction=new_transaction)
 
+
 class GiveGoat(TakeGoat):
     def mutate(self, info, from_user, to_user, goat_id):
         # create transaction
@@ -223,14 +252,17 @@ class GiveGoat(TakeGoat):
         db.session.commit()
         return GiveGoat(transaction=new_transaction)
 
+
 class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
     login_user = LoginUser.Field()
     update_user_email = UpdateUserEmail.Field()
+    update_user_password = UpdateUserPassword.Field()
 
     create_goats = CreateGoats.Field()
     take_goat = TakeGoat.Field()
     give_goat = GiveGoat.Field()
+
 
 schema = graphene.Schema(
     query=Query,
