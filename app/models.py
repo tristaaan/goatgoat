@@ -17,6 +17,7 @@ class User(db.Model):
   id = db.Column('user_id', db.Integer, primary_key=True)
   email = db.Column('email', db.String(96), unique=True, nullable=False)
   name = db.Column('name', db.String(64), unique=True, nullable=False)
+  goatvatar = db.Column('goatvatar', db.Integer, default=1, nullable=False)
   pw = db.Column('password', db.String(128), nullable=False)
   pwResetToken = db.Column('pw_reset_token', db.String, nullable=True)
   pwResetExpires = db.Column('pw_reset_expires', db.DateTime, nullable=True)

@@ -30,6 +30,7 @@ class UserObject(SQLAlchemyObjectType):
     class Meta:
         model = User
         interfaces = (graphene.relay.Node, )
+        exclude_fields=('pw', 'pwResetToken', 'pwResetExpires')
 
 class GoatObject(SQLAlchemyObjectType):
     class Meta:
@@ -200,6 +201,29 @@ class UpdateUserPassword(graphene.Mutation):
         raise GraphQLError('invalid token')
 
 
+class UpdateUserGoat(graphene.Mutation):
+    class Arguments:
+        token = graphene.String()
+        new_goat = graphene.Int()
+
+    success = graphene.Boolean()
+
+    @mutation_jwt_required
+    def mutate(self, info, new_goat):
+        name = get_jwt_identity()
+        if name is not None:
+            user = User.query.filter_by(name=name).first()
+            user.goatvatar = new_goat
+            try:
+                db.session.commit()
+            except IntegrityError as e:
+                db.session.rollback()
+                raise GraphQLError(e.message)
+            return UpdateUserGoat(success=True)
+
+        raise GraphQLError('invalid token')
+
+
 class CreateGoats(graphene.Mutation):
     class Arguments:
         count = graphene.String()
@@ -258,6 +282,7 @@ class Mutation(graphene.ObjectType):
     login_user = LoginUser.Field()
     update_user_email = UpdateUserEmail.Field()
     update_user_password = UpdateUserPassword.Field()
+    update_user_goat = UpdateUserGoat.Field()
 
     create_goats = CreateGoats.Field()
     take_goat = TakeGoat.Field()

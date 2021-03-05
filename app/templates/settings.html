@@ -23,13 +23,20 @@
   </div>
 
   <div class="settings-cell">
-    <label for="goat">Choose your goat-vatar</label>
-    {% for i in range(5) %}
-    <label for="{{i}}">
-      {{i}}
-      <input name="{{i}}" type="radio">
-    </label>
-    {% endfor %}
+    <span for="goat">Choose your goat-vatar:</span>
+    <form name="goatType" id="goat-type">
+      <ul>
+        {% for i in range(1,6) %}
+        <li>
+          {% set fname = 'goat' ~ i ~ 'x75.png' %}
+          <label>
+            <input name="goat" type="radio" value="{{i}}" id="goat{{i}}">
+            <img src="{{url_for('static', filename=fname)}}" alt="goat {{i}}">
+          </label>
+        </li>
+        {% endfor %}
+      </ul>
+    </form>
     <button id="update-goat">Update</button>
     <span class="goat-result"></span>
   </div>
@@ -46,18 +53,26 @@
   const updatePassword = document.getElementById('update-password');
   const passwordResult = document.querySelector('.password-result');
 
+  const goatForm = document.getElementById('goat-type');
+  const updateGoat = document.getElementById('update-goat');
+  const goatResult = document.querySelector('.goat-result');
+  let oldGoat = -1;
   sendQuery(`
     {
       userByName(name: "{{username}}") {
         name
         email
+        goatvatar
       }
     }`
   ).then(successCallback)
   .catch(errorCallback);
 
   function successCallback(json) {
-    emailForm.value = json.data.userByName.email;
+    const {email, goatvatar} = json.data.userByName;
+    emailForm.value = email;
+    document.getElementById(`goat${goatvatar}`).checked = true;
+    oldGoat = goatvatar;
   }
 
   function errorCallback(err) {
@@ -101,6 +116,34 @@
     }).catch((json) => {
       passwordResult.textContent = json.errors[0].message;
     });
+  });
+
+  updateGoat.addEventListener('click', (e) => {
+    const token = getCookie('token');
+    let newGoat = -1;
+    for (el of document.goatType) {
+      if (el.checked) {
+        newGoat = el.value;
+        break;
+      }
+    }
+    if (oldGoat === newGoat) {
+      return;
+    }
+    sendQuery(
+      `mutation updateUserGoat($newGoat:Int!, $token:String!) {
+        updateUserGoat(newGoat:$newGoat, token:$token) {
+          success
+        }
+      }`,
+      {newGoat, token},
+      'updateUserGoat'
+    ).then((json) => {
+      goatResult.textContent = 'Goatvatar updated';
+      clearField(goatResult);
+    }).catch((json) => {
+      goatResult.textContent = json.errors[0].message;
+    })
   });
 
   function clearField(field, timeout = 2500) {
