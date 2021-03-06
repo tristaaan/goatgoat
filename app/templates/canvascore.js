@@ -113,7 +113,7 @@ function removeGoatAndRedraw(goatIdToRemove) {
   delete goatById[goatIdToRemove];
   goatLocations = [];
   for (gid in goatById) {
-    const center = goatById[gid];
+    const {center} = goatById[gid];
     goatLocations.push(center);
   }
   clearAndRedraw();
