@@ -76,20 +76,22 @@ class Query(graphene.ObjectType):
 
     # TRANSACTIONs
     all_transactions = SQLAlchemyConnectionField(TransactionObject)
-    transactions_from = graphene.List(TransactionObject, from_user=graphene.Int())
-    transactions_to = graphene.List(TransactionObject, to_user=graphene.Int())
+    transactions_from = graphene.List(TransactionObject, user_id=graphene.Int())
     def resolve_transactions_from(self, info, **kwargs):
-        from_user = kwargs.get('from_user')
-        return Transaction.query.get(from_user=from_user)
+        user_id = kwargs.get('user_id')
+        return Transaction.query.filter_by(from_user_id=user_id) \
+            .order_by(Transaction.timestamp) \
+            .limit(10)
 
+    transactions_to = graphene.List(TransactionObject, user_id=graphene.Int())
     def resolve_transactions_to(self, info, **kwargs):
-        to_user = kwargs.get('to_user')
-        return Transaction.query.get(to_user=to_user)
+        user_id = kwargs.get('user_id')
+        return Transaction.query.get(to_user_id=user_id)
 
     transactions_for_goat = graphene.List(TransactionObject, goat_id=graphene.Int())
     def resolve_transactions_for_goat(self, info, **kwargs):
-        goat = kwargs['goat_id']
-        return Transaction.query.filter_by(goat=goat).all()
+        goat_id = kwargs['goat_id']
+        return Transaction.query.filter_by(goat_id=goat_id).all()
 
 
 # Mutations

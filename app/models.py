@@ -56,12 +56,21 @@ class Transaction(db.Model):
   __tablename__ = 'transactions'
 
   transaction_id = db.Column('transaction_id', db.Integer, primary_key=True)
-  from_user = db.Column('from_user', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-  to_user = db.Column('to_user', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-  goat = db.Column('goat_id', db.Integer, db.ForeignKey('goats.goat_id'), nullable=False)
+  goat_id = db.Column('goat_id', db.Integer, db.ForeignKey('goats.goat_id'), nullable=False)
   timestamp = db.Column('timestamp', db.DateTime, default=now)
 
+  from_user_id = db.Column('from_user', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  from_user = relationship(
+    User,
+    foreign_keys=[from_user_id]
+  )
+  to_user_id = db.Column('to_user', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  to_user = relationship(
+    User,
+    foreign_keys=[to_user_id]
+  )
+
   def __init__(self, from_user, to_user, goat):
-    self.from_user = from_user
-    self.to_user = to_user
-    self.goat = goat
+    self.from_user_id = from_user
+    self.to_user_id = to_user
+    self.goat_id = goat

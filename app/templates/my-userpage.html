@@ -2,8 +2,10 @@
 
 {% block content %}
   <h1>Welcome {{ username }}</h1>
+  <hr>
   <canvas id="canvas">
   </canvas>
+  <hr>
   <div class="info-panel" style="display: none;">
     <ul>
       <li>Original owner: <a class="original-owner-label"></a></li>
@@ -14,6 +16,10 @@
       </li>
     </ul>
   </div>
+  <hr>
+  <table class="transaction-log">
+
+  </table>
 {% endblock %}
 
 {% block scripts %}
@@ -27,6 +33,7 @@
   const transactionRow = document.querySelector('.transaction-row');
   const transactionDateLabel = document.querySelector('.transactions-date-label');
   const transactionUserLabel = document.querySelector('.transactions-user-label');
+  const transactionLog = document.querySelector('.transaction-log');
 
   function didClick(x,y) {
     const gid = goatNearestToClick(x,y);
@@ -46,7 +53,7 @@
     sendQuery(
       `{
         transactionsForGoat(goatId: ${selectedGoatId}) {
-          fromUser
+          fromUser { name }
           timestamp
         }
       }`
@@ -59,15 +66,50 @@
       }
       const {fromUser, timestamp} = json.data.transactionsForGoat[0];
       transactionDateLabel.textContent = `${formatTimestamp(timestamp)}`;
-      sendQuery(`{userById(userId: ${fromUser}) {name}}`)
-        .then((json2) => {
-          const {name} = json2.data.userById;
-          transactionUserLabel.textContent = name;
-          transactionUserLabel.href = `/${name}`;
-        });
+      const {name} = fromUser;
+      transactionUserLabel.textContent = name;
+      transactionUserLabel.href = `/${name}`;
     }).catch((json) => {
       console.log(json);
     });
   }
+
+  sendQuery(`{transactionsFrom(userId: {{user_id}}) {
+    fromUser {
+      name
+    }
+    toUser {
+      name
+    }
+    timestamp}}
+  `).then((json) => {
+    const transactions = json.data.transactionsFrom;
+    for ({fromUser, toUser, timestamp} of transactions) {
+      const tr = document.createElement("tr");
+      tr.appendChild(makeCell(fromUser.name));
+      tr.appendChild(makeCell('➔'));
+      tr.appendChild(makeNameLinkCell(toUser.name));
+      tr.appendChild(makeCell(formatTimestamp(timestamp)));
+      transactionLog.appendChild(tr);
+    }
+  }).catch((json) => {
+    console.log(json);
+  });
+
+  function makeCell(contents) {
+    const cell = document.createElement('td');
+    cell.textContent = contents;
+    return cell;
+  }
+
+  function makeNameLinkCell(contents) {
+    const cell = document.createElement('td');
+    const a = document.createElement('a');
+    a.textContent = contents;
+    a.href = `/${contents}`;
+    cell.appendChild(a);
+    return cell;
+  }
+
 </script>
 {% endblock %}

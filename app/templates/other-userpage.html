@@ -1,9 +1,11 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
-  <h1>{{ username }}'s Goats</h1>
+  <h1>{{ username }}</h1>
+  <hr>
   <canvas id="canvas">
   </canvas>
+  <hr>
   <div class="info-panel" style="display: none;">
     <ul>
       <li>Original owner: <a class="original-owner-label"></a></li>
@@ -42,14 +44,14 @@
     ownerLabel.textContent = name;
     if (name !== '{{my_username}}') {
       ownerLabel.href = `/${name}`;
-      stealButton.style.display = 'block';
     } else {
       ownerLabel.removeAttribute('href');
     }
+    stealButton.style.display = 'block';
     sendQuery(
       `{
         transactionsForGoat(goatId: ${selectedGoatId}) {
-          fromUser
+          fromUser { name }
           timestamp
         }
       }`
@@ -61,12 +63,9 @@
       const {fromUser, timestamp} = json.data.transactionsForGoat[0];
       transactionRow.style.display = 'block';
       transactionDateLabel.textContent = `${formatTimestamp(timestamp)}`;
-      sendQuery(`{userById(userId: ${fromUser}) {name}}`)
-        .then((json2) => {
-          const {name} = json2.data.userById;
-          transactionUserLabel.textContent = name;
-          transactionUserLabel.href = `/${name}`;
-        });
+      const {name} = fromUser;
+      transactionUserLabel.textContent = name;
+      transactionUserLabel.href = `/${name}`;
     }).catch((json) => {
       console.log(json);
     });
