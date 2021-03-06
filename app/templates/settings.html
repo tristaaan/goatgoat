@@ -26,12 +26,11 @@
     <span for="goat">Choose your goat-vatar:</span>
     <form name="goatType" id="goat-type">
       <ul>
-        {% for i in range(1,6) %}
+        {% for goat_img in goat_imgs %}
         <li>
-          {% set fname = 'goat' ~ i ~ 'x75.png' %}
           <label>
-            <input name="goat" type="radio" value="{{i}}" id="goat{{i}}">
-            <img src="{{url_for('static', filename=fname)}}" alt="goat {{i}}">
+            <input name="goat" type="radio" value="{{loop.index}}" id="goat{{loop.index}}">
+            <img src="data:image/png;base64,{{ goat_img | safe }}" alt="goat {{loop.index}}">
           </label>
         </li>
         {% endfor %}

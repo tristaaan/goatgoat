@@ -1,3 +1,7 @@
+import glob
+import base64
+from os import path
+
 from flask import Flask
 from flask_migrate import Migrate
 from flask_graphql import GraphQLView
@@ -25,6 +29,22 @@ app.add_url_rule(
 )
 db.init_app(app)
 GraphQLAuth(app)
+
+@app.before_first_request
+def before_first_request():
+  fpath = path.join(
+    path.abspath(path.dirname(__file__)),
+    'static',
+    'img/goatvatar/*.png'
+  )
+  files = sorted(glob.glob(fpath))
+  base64_images = []
+  for f in files:
+    with open(f, 'rb') as img:
+      base64_images.append(
+        base64.b64encode(img.read()).decode('utf8')
+      )
+  app.config['goat_imgs'] = base64_images
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):

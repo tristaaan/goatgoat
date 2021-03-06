@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect
+from flask import Blueprint, render_template, request, redirect, current_app
 from flask_graphql_auth import get_jwt_data
 from sqlalchemy.sql import select, func
 
@@ -54,9 +54,13 @@ def user_settings():
   if token is not None:
     data = get_jwt_data(token, 'access')
     username = data['identity']
-    return render_template('settings.html', username=username, logged_in=True)
+    return render_template('settings.html',
+      goat_imgs=current_app.config['goat_imgs'],
+      username=username,
+      logged_in=True
+    )
 
-  return redirect(f'/{username}', code=302)
+  return redirect(f'/', code=302)
 
 
 @views.route('/<username>', methods=['GET'])
