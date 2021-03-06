@@ -1,9 +1,20 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
-  <h1>Welcome {{ username }}</h1>
+  <h1>{{ username }}'s Goats</h1>
   <canvas id="canvas">
   </canvas>
+  <div class="info-panel" style="display: none;">
+    <ul>
+      <li>Original owner: <span class="original-owner-label"></span></li>
+      <li class="transaction-row" style="display: none;">Last transaction:
+        <span class="transactions-date-label"></span>
+        from
+        <span class="transactions-user-label"></span>
+      </li>
+    </ul>
+    <button class="steal-button" style="display: none;">Steal!</button>
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -11,9 +22,72 @@
 {% include 'canvascore.js' %}
 </script>
 <script type="text/javascript">
-  console.log('other userpage');
+  const goatPanel = document.querySelector('.info-panel');
+  const ownerLabel = document.querySelector('.original-owner-label');
+  const transactionRow = document.querySelector('.transaction-row');
+  const transactionDateLabel = document.querySelector('.transactions-date-label');
+  const transactionUserLabel = document.querySelector('.transactions-user-label');
+  const stealButton = document.querySelector('.steal-button');
+  let selectedGoatId = null;
+
   function didClick(x,y) {
-    console.log(goatsNearClick(x,y));
+    const clickedGoats = [goatsNearClick(x,y)[0]];
+    for (gid of clickedGoats) {
+      console.log(gid);
+      selectedGoatId = gid;
+      goatPanel.style.display = 'block';
+      const {name} = goatById[gid].origOwner;
+      ownerLabel.textContent = name;
+      if (name !== '{{my_username}}') {
+        stealButton.style.display = 'block';
+      }
+      sendQuery(
+        `{
+          transactionsForGoat(goatId: ${selectedGoatId}) {
+            fromUser
+            timestamp
+          }
+        }`
+      ).then((json) => {
+        if (json.data.transactionsForGoat.length == 0) {
+          transactionRow.style.display = 'none';
+          return;
+        }
+        const {fromUser, timestamp} = json.data.transactionsForGoat[0];
+        transactionRow.style.display = 'block';
+        transactionDateLabel.textContent = `${timestamp}`;
+        sendQuery(`{userById(userId: ${fromUser}) {name}}`)
+          .then((json2) => {
+            const {name} = json2.data.userById;
+            transactionUserLabel.textContent = name;
+          });
+      }).catch((json) => {
+        console.log(json);
+      });
+    }
   }
+
+  stealButton.addEventListener('click', (e) => {
+    const fromUser = goatById[selectedGoatId].origOwner.userId;
+    const goatId = selectedGoatId;
+    const token = getCookie('token');
+    sendQuery(
+      `mutation TakeGoat($fromUser:Int!, $goatId:Int!, $token:String!) {
+        takeGoat(fromUser:$fromUser, goatId:$goatId, token:$token) {
+          transaction {
+            transactionId
+          }
+        }
+      }`,
+      {fromUser, goatId, token},
+      'TakeGoat'
+    ).then((json) => {
+      removeGoatAndRedraw(selectedGoatId);
+      selectedGoatId = null;
+      goatPanel.style.display = 'none';
+    }).catch((json) => {
+      console.log(json);
+    });
+  });
 </script>
 {% endblock %}

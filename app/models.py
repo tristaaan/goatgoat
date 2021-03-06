@@ -14,7 +14,7 @@ def now():
 class User(db.Model):
   __tablename__ = 'users'
 
-  id = db.Column('user_id', db.Integer, primary_key=True)
+  user_id = db.Column('user_id', db.Integer, primary_key=True)
   email = db.Column('email', db.String(96), unique=True, nullable=False)
   name = db.Column('name', db.String(64), unique=True, nullable=False)
   goatvatar = db.Column('goatvatar', db.Integer, default=1, nullable=False)
@@ -27,13 +27,10 @@ class User(db.Model):
     self.name = name
     self.pw = password
 
-  def __repr__(self):
-      return '%d' % self.id
-
 
 class Goat(db.Model):
   __tablename__ = 'goats'
-  id = db.Column('goat_id', db.Integer, primary_key=True)
+  goat_id = db.Column('goat_id', db.Integer, primary_key=True)
   created = db.Column('created', db.DateTime, default=now)
   original_owner_id = db.Column('original_owner_id', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
   owner_id = db.Column('owner_id', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
@@ -58,16 +55,13 @@ class Goat(db.Model):
 class Transaction(db.Model):
   __tablename__ = 'transactions'
 
-  id = db.Column(db.Integer, primary_key=True)
-  from_user = db.Column('from', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-  to_user = db.Column('to', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  transaction_id = db.Column('transaction_id', db.Integer, primary_key=True)
+  from_user = db.Column('from_user', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+  to_user = db.Column('to_user', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
   goat = db.Column('goat_id', db.Integer, db.ForeignKey('goats.goat_id'), nullable=False)
-  when = db.Column('timestamp', db.DateTime, default=now)
+  timestamp = db.Column('timestamp', db.DateTime, default=now)
 
   def __init__(self, from_user, to_user, goat):
     self.from_user = from_user
     self.to_user = to_user
     self.goat = goat
-
-  def __repr__(self):
-    return '(%d) %d -> %d' % (goat, from_user, to_user)

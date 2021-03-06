@@ -87,6 +87,7 @@ def userpage(username):
     return render_template(
       'other-userpage.html',
       username=username,
+      my_username=token_username,
       logged_in=True,
       goat_imgs=current_app.config['goat_imgs']
     )

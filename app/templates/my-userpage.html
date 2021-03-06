@@ -4,6 +4,16 @@
   <h1>Welcome {{ username }}</h1>
   <canvas id="canvas">
   </canvas>
+  <div class="info-panel" style="display: none;">
+    <ul>
+      <li>Original owner: <span class="original-owner-label"></span></li>
+      <li class="transaction-row" style="display: none;">Last transaction:
+        <span class="transactions-date-label"></span>
+        from
+        <span class="transactions-user-label"></span>
+      </li>
+    </ul>
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -12,8 +22,45 @@
 </script>
 <script type="text/javascript">
   console.log('my userpage');
+  const goatPanel = document.querySelector('.info-panel');
+  const ownerLabel = document.querySelector('.original-owner-label');
+  const transactionRow = document.querySelector('.transaction-row');
+  const transactionDateLabel = document.querySelector('.transactions-date-label');
+  const transactionUserLabel = document.querySelector('.transactions-user-label');
+
   function didClick(x,y) {
-    console.log(goatsNearClick(x,y));
+    const clickedGoats = [goatsNearClick(x,y)[0]];
+    for (gid of clickedGoats) {
+      console.log(gid);
+      selectedGoatId = gid;
+      goatPanel.style.display = 'block';
+      const {name} = goatById[gid].origOwner;
+      ownerLabel.textContent = name;
+      sendQuery(
+        `{
+          transactionsForGoat(goatId: ${selectedGoatId}) {
+            fromUser
+            timestamp
+          }
+        }`
+      ).then((json) => {
+        if (json.data.transactionsForGoat.length == 0) {
+          transactionRow.style.display = 'none';
+          return;
+        } else {
+          transactionRow.style.display = 'block';
+        }
+        const {fromUser, timestamp} = json.data.transactionsForGoat[0];
+        transactionDateLabel.textContent = `${timestamp}`;
+        sendQuery(`{userById(userId: ${fromUser}) {name}}`)
+          .then((json2) => {
+            const {name} = json2.data.userById;
+            transactionUserLabel.textContent = name;
+          });
+      }).catch((json) => {
+        console.log(json);
+      });
+    }
   }
 </script>
 {% endblock %}

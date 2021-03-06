@@ -51,13 +51,13 @@ class Query(graphene.ObjectType):
 
     # USERs
     all_users = SQLAlchemyConnectionField(UserObject)
-    user_by_id = graphene.Field(UserObject, id=graphene.Int())
+    user_by_id = graphene.Field(UserObject, user_id=graphene.Int())
     user_by_name = graphene.Field(UserObject, name=graphene.String())
     user_by_email = graphene.Field(UserObject, email=graphene.String())
 
     def resolve_user_by_id(self, info, **kwargs):
-        _id = kwargs.get('id')
-        return User.query.filter_by(id=_id).first()
+        user_id = kwargs.get('user_id')
+        return User.query.filter_by(user_id=user_id).first()
 
     def resolve_user_by_name(self, info, **kwargs):
         name = kwargs.get('name')
@@ -85,6 +85,12 @@ class Query(graphene.ObjectType):
     def resolve_transactions_to(self, info, **kwargs):
         to_user = kwargs.get('to_user')
         return Transaction.query.get(to_user=to_user)
+
+    transactions_for_goat = graphene.List(TransactionObject, goat_id=graphene.Int())
+    def resolve_transactions_for_goat(self, info, **kwargs):
+        goat = kwargs['goat_id']
+        return Transaction.query.filter_by(goat=goat).all()
+
 
 # Mutations
 class CreateUser(graphene.Mutation):
@@ -243,38 +249,48 @@ class CreateGoats(graphene.Mutation):
 
 class TakeGoat(graphene.Mutation):
     class Arguments:
-        from_user = graphene.String()
-        to_user = graphene.String()
+        token = graphene.String()
+        from_user = graphene.Int()
         goat_id = graphene.Int()
 
     transaction = graphene.Field(TransactionObject)
-    goat = graphene.Field(GoatObject)
 
-    def mutate(self, info, from_user, to_user, goat_id):
+    @mutation_jwt_required
+    def mutate(self, info, from_user, goat_id):
+        name = get_jwt_identity()
+        goat = Goat.query.filter_by(goat_id=goat_id).first()
+        to_user = User.query.filter_by(name=name).first()
+        if to_user.user_id == from_user or to_user.user_id == goat.owner_id:
+            raise GraphQLError('You cannot take your own goat')
+
         # create transaction
-        new_transaction = Transaction(from_user, to_user, goat_id)
+        new_transaction = Transaction(from_user, to_user.user_id, goat_id)
         db.session.add(new_transaction)
 
         # update goat
-        db.session.update(Goat).where(Goat.id == goat_id).values(owner_id=to_user)
+        goat.owner_id = to_user.user_id
 
         # commit
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            raise GraphQLError(e.message)
         return TakeGoat(transaction=new_transaction)
 
 
-class GiveGoat(TakeGoat):
-    def mutate(self, info, from_user, to_user, goat_id):
-        # create transaction
-        new_transaction = Transaction(from_user, to_user, goat_id)
-        db.session.add(new_transaction)
+# class GiveGoat(TakeGoat):
+#     def mutate(self, info, from_user, to_user, goat_id):
+#         # create transaction
+#         new_transaction = Transaction(from_user, to_user, goat_id)
+#         db.session.add(new_transaction)
 
-        # update goat
-        db.session.update(Goat).where(Goat.id == goat_id).values(owner_id=to_user)
+#         # update goat
+#         db.session.update(Goat).where(Goat.id == goat_id).values(owner_id=to_user)
 
-        # commit
-        db.session.commit()
-        return GiveGoat(transaction=new_transaction)
+#         # commit
+#         db.session.commit()
+#         return GiveGoat(transaction=new_transaction)
 
 
 class Mutation(graphene.ObjectType):
@@ -286,7 +302,7 @@ class Mutation(graphene.ObjectType):
 
     create_goats = CreateGoats.Field()
     take_goat = TakeGoat.Field()
-    give_goat = GiveGoat.Field()
+    # give_goat = GiveGoat.Field()
 
 
 schema = graphene.Schema(

@@ -41,16 +41,18 @@ const goat_imgs = [
   '{{ g_img | e }}',
   {% endfor %}
 ];
-const goatLocations = [];
+let goatById = {};
+let goatLocations = [];
 sendQuery(
   `{userByName(name: "{{ username }}") {
-      id,
+      userId,
       goats {
         edges {
           node {
-            id
+            goatId
             originalOwner {
-              id
+              userId
+              name
               goatvatar
             }
           }
@@ -60,28 +62,57 @@ sendQuery(
   }`
 ).then((json) => {
   json.data.userByName.goats.edges.forEach(({node}) => {
-    drawGoatAtRandomPoint(node.originalOwner.goatvatar, node.id);
+    drawGoatAtRandomPoint(node.originalOwner, node.goatId);
   });
 })
 .catch((json) => {
   console.error(json);
 });
 
-function drawGoatAtRandomPoint(gType, id) {
+function drawGoatAtRandomPoint(origOwner, goatId) {
   const margin = 50;
-  const flip = Math.random() > 0.5;
+  const flipped = Math.random() > 0.5;
   const rX = margin + Math.random() * (width - margin*2);
   const rY = margin + Math.random() * (height - margin*2);
   const img = new Image();
   img.onload = function() {
-    if (flip) {
-      drawFlipped(img, rX, rY);
-    } else {
-      ctx.drawImage(img, rX, rY);
-    }
-    goatLocations.push([rX + img.width/2, rY + img.height/2, id]);
+    drawGoatAtPoint(img, rX, rY, flipped);
+    const center = [rX + img.width/2, rY + img.height/2, goatId];
+    goatLocations.push(center);
+    goatById[goatId] = {drawLoc: [rX, rY], center, origOwner, flipped};
   }
-  img.src = `data:image/png;base64,${goat_imgs[gType-1]}`;
+  img.src = `data:image/png;base64,${goat_imgs[origOwner.goatvatar-1]}`;
+}
+
+function drawGoatAtPoint(img, x, y, flipped) {
+  if (flipped) {
+    drawFlipped(img, x, y);
+  } else {
+    ctx.drawImage(img, x, y);
+  }
+}
+
+function removeGoatAndRedraw(goatIdToRemove) {
+  delete goatById[goatIdToRemove];
+  goatLocations = [];
+  for (gid in goatById) {
+    const center = goatById[gid];
+    goatLocations.push(center);
+  }
+  redraw();
+}
+
+function redraw() {
+  ctx.clearRect(0, 0, width, height);
+  for (gid in goatById) {
+    const {drawLoc, origOwner, flipped} = goatById[gid];
+    const [x,y] = drawLoc;
+    const img = new Image();
+    img.onload = function() {
+      drawGoatAtPoint(img, x, y, flipped);
+    }
+    img.src = `data:image/png;base64,${goat_imgs[origOwner.goatvatar-1]}`;
+  }
 }
 
 function drawFlipped(img, x, y) {
@@ -114,6 +145,6 @@ canvas.addEventListener('click', (e) => {
   try {
     didClick(x,y);
   } catch (e) {
-    console.error('didClick() is unimplemented');
+    console.error(e);
   }
 });
