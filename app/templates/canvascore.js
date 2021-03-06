@@ -146,6 +146,10 @@ function redraw() {
   }
 }
 
+function formatTimestamp(ts) {
+  return new Date(ts).toLocaleString();
+}
+
 function drawFlipped(img, x, y) {
   ctx.translate(x+img.width, y);
   ctx.scale(-1,1);
