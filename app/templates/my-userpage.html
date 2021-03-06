@@ -29,11 +29,10 @@
   const transactionUserLabel = document.querySelector('.transactions-user-label');
 
   function didClick(x,y) {
-    const clickedGoats = goatsNearClick(x,y);
-    if (!clickedGoats.length) {
+    const gid = goatNearestToClick(x,y);
+    if (!gid) {
       return;
     }
-    const gid = clickedGoats[0];
     selectGoat(goatById[gid].center[0], goatById[gid].center[1]);
     selectedGoatId = gid;
     goatPanel.style.display = 'block';

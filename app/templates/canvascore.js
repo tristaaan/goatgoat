@@ -170,6 +170,20 @@ function goatsNearClick(x,y) {
   return ret;
 }
 
+function goatNearestToClick(x,y) {
+  const margin = 50;
+  let nearest = null;
+  let minDistance = 10e6;
+  for ([gX, gY, id] of goatLocations) {
+    const d = distance(x, y, gX, gY)
+    if (d < margin && d < minDistance) {
+      nearest = id;
+      minDistance = d;
+    }
+  }
+  return nearest;
+}
+
 canvas.addEventListener('click', (e) => {
   const x = e.pageX - canvas.offsetLeft;
   const y = e.pageY - canvas.offsetTop;

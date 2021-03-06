@@ -31,11 +31,10 @@
   let selectedGoatId = null;
 
   function didClick(x,y) {
-    const clickedGoats = goatsNearClick(x,y);
-    if (!clickedGoats.length) {
+    const gid = goatNearestToClick(x,y);
+    if (!gid) {
       return;
     }
-    const gid = clickedGoats[0];
     selectGoat(...goatById[gid].center);
     selectedGoatId = gid;
     goatPanel.style.display = 'block';
