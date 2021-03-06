@@ -23,7 +23,11 @@ def redirect_else_render(page):
 
 @views.route('/')
 def index():
-    return render_template('home.html', logged_in=(get_credentials() is not None))
+  data = get_credentials()
+  if data is not None:
+    username = data['identity']
+    return redirect(f'/{username}', code=302)
+  return render_template('home.html', logged_in=(get_credentials() is not None))
 
 
 # AUTH
@@ -72,9 +76,25 @@ def userpage(username):
     token_username = data['identity']
     # if visiting your own page render 'my page'
     if token_username == username:
-      return render_template('my-userpage.html', username=username, logged_in=True)
+      return render_template(
+        'my-userpage.html',
+        username=username,
+        logged_in=True,
+        goat_imgs=current_app.config['goat_imgs']
+      )
+
     # else render other page with logic to steal goats
-    return render_template('other-userpage.html', username=username, logged_in=True)
+    return render_template(
+      'other-userpage.html',
+      username=username,
+      logged_in=True,
+      goat_imgs=current_app.config['goat_imgs']
+    )
 
   # visiting a user's page when not logged in
-  return render_template('non-logged-in-userpage.html', username=username, logged_in=False)
+  return render_template(
+    'non-logged-in-userpage.html',
+    username=username,
+    logged_in=False,
+    goat_imgs=current_app.config['goat_imgs']
+  )
