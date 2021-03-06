@@ -76,20 +76,15 @@ function drawGoatAtRandomPoint(origOwner, goatId) {
   const rX = margin + Math.random() * (width - margin*2);
   const rY = margin + Math.random() * (height - margin*2);
   const imgId = origOwner.goatvatar-1;
-  if (!goatImgById.hasOwnProperty(imgId)) {
-    const img = new Image();
-    img.onload = function() {
-      drawGoatAtPoint(img, rX, rY, flipped);
-      const center = [rX + img.width/2, rY + img.height/2, goatId];
-      goatLocations.push(center);
-      goatById[goatId] = {drawLoc: [rX, rY], center, origOwner, flipped};
-      goatImgById[imgId] = img;
-    }
-    img.src = `data:image/png;base64,${goatImgStrs[imgId]}`;
-  } else {
-    const img = goatImgById[imgId];
+  const img = new Image();
+  img.onload = function() {
     drawGoatAtPoint(img, rX, rY, flipped);
+    const center = [rX + img.width/2, rY + img.height/2, goatId];
+    goatLocations.push(center);
+    goatById[goatId] = {drawLoc: [rX, rY], center, origOwner, flipped};
+    goatImgById[imgId] = img;
   }
+  img.src = `data:image/png;base64,${goatImgStrs[imgId]}`;
 }
 
 function drawGoatAtPoint(img, x, y, flipped) {
