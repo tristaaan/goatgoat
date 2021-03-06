@@ -31,40 +31,41 @@
   let selectedGoatId = null;
 
   function didClick(x,y) {
-    const clickedGoats = [goatsNearClick(x,y)[0]];
-    for (gid of clickedGoats) {
-      console.log(gid);
-      selectedGoatId = gid;
-      goatPanel.style.display = 'block';
-      const {name} = goatById[gid].origOwner;
-      ownerLabel.textContent = name;
-      if (name !== '{{my_username}}') {
-        stealButton.style.display = 'block';
-      }
-      sendQuery(
-        `{
-          transactionsForGoat(goatId: ${selectedGoatId}) {
-            fromUser
-            timestamp
-          }
-        }`
-      ).then((json) => {
-        if (json.data.transactionsForGoat.length == 0) {
-          transactionRow.style.display = 'none';
-          return;
-        }
-        const {fromUser, timestamp} = json.data.transactionsForGoat[0];
-        transactionRow.style.display = 'block';
-        transactionDateLabel.textContent = `${timestamp}`;
-        sendQuery(`{userById(userId: ${fromUser}) {name}}`)
-          .then((json2) => {
-            const {name} = json2.data.userById;
-            transactionUserLabel.textContent = name;
-          });
-      }).catch((json) => {
-        console.log(json);
-      });
+    const clickedGoats = goatsNearClick(x,y);
+    if (!clickedGoats.length) {
+      return;
     }
+    const gid = clickedGoats[0];
+    selectedGoatId = gid;
+    goatPanel.style.display = 'block';
+    const {name} = goatById[gid].origOwner;
+    ownerLabel.textContent = name;
+    if (name !== '{{my_username}}') {
+      stealButton.style.display = 'block';
+    }
+    sendQuery(
+      `{
+        transactionsForGoat(goatId: ${selectedGoatId}) {
+          fromUser
+          timestamp
+        }
+      }`
+    ).then((json) => {
+      if (json.data.transactionsForGoat.length == 0) {
+        transactionRow.style.display = 'none';
+        return;
+      }
+      const {fromUser, timestamp} = json.data.transactionsForGoat[0];
+      transactionRow.style.display = 'block';
+      transactionDateLabel.textContent = `${timestamp}`;
+      sendQuery(`{userById(userId: ${fromUser}) {name}}`)
+        .then((json2) => {
+          const {name} = json2.data.userById;
+          transactionUserLabel.textContent = name;
+        });
+    }).catch((json) => {
+      console.log(json);
+    });
   }
 
   stealButton.addEventListener('click', (e) => {
