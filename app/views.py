@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, redirect, current_app
 from flask_graphql_auth import get_jwt_data
 from sqlalchemy.sql import select, func
 
+from .models import db, User
+
 views = Blueprint('views', __name__, template_folder='templates')
 
 
@@ -70,7 +72,7 @@ def user_settings():
 @views.route('/<username>', methods=['GET'])
 def userpage(username):
   token = request.cookies.get('token', None)
-
+  user = User.query.filter_by(name=username).first();
   if token is not None:
     data = get_jwt_data(token, 'access')
     token_username = data['identity']
@@ -79,10 +81,16 @@ def userpage(username):
       return render_template(
         'my-userpage.html',
         username=username,
+        user_id=user.user_id,
         logged_in=True,
         goat_imgs=current_app.config['goat_imgs']
       )
-
+    if not user:
+      return render_template(
+          'null-userpage.html',
+          username=username,
+          logged_in=True
+        )
     # else render other page with logic to steal goats
     return render_template(
       'other-userpage.html',
@@ -92,6 +100,12 @@ def userpage(username):
       goat_imgs=current_app.config['goat_imgs']
     )
 
+  if not user:
+    return render_template(
+      'null-userpage.html',
+      username=username,
+      logged_in=False
+    )
   # visiting a user's page when not logged in
   return render_template(
     'non-logged-in-userpage.html',
