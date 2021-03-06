@@ -36,6 +36,7 @@
       return;
     }
     const gid = clickedGoats[0];
+    selectGoat(...goatById[gid].center);
     selectedGoatId = gid;
     goatPanel.style.display = 'block';
     const {name} = goatById[gid].origOwner;

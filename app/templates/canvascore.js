@@ -36,11 +36,12 @@ canvas.width = `${width}`;
 canvas.height = `${height}`;
 autoScale(canvas, ctx);
 
-const goat_imgs = [
+const goatImgStrs = [
   {% for g_img in goat_imgs %}
   '{{ g_img | e }}',
   {% endfor %}
 ];
+const goatImgById = {};
 let goatById = {};
 let goatLocations = [];
 sendQuery(
@@ -74,14 +75,21 @@ function drawGoatAtRandomPoint(origOwner, goatId) {
   const flipped = Math.random() > 0.5;
   const rX = margin + Math.random() * (width - margin*2);
   const rY = margin + Math.random() * (height - margin*2);
-  const img = new Image();
-  img.onload = function() {
+  const imgId = origOwner.goatvatar-1;
+  if (!goatImgById.hasOwnProperty(imgId)) {
+    const img = new Image();
+    img.onload = function() {
+      drawGoatAtPoint(img, rX, rY, flipped);
+      const center = [rX + img.width/2, rY + img.height/2, goatId];
+      goatLocations.push(center);
+      goatById[goatId] = {drawLoc: [rX, rY], center, origOwner, flipped};
+      goatImgById[imgId] = img;
+    }
+    img.src = `data:image/png;base64,${goatImgStrs[imgId]}`;
+  } else {
+    const img = goatImgById[imgId];
     drawGoatAtPoint(img, rX, rY, flipped);
-    const center = [rX + img.width/2, rY + img.height/2, goatId];
-    goatLocations.push(center);
-    goatById[goatId] = {drawLoc: [rX, rY], center, origOwner, flipped};
   }
-  img.src = `data:image/png;base64,${goat_imgs[origOwner.goatvatar-1]}`;
 }
 
 function drawGoatAtPoint(img, x, y, flipped) {
@@ -92,6 +100,15 @@ function drawGoatAtPoint(img, x, y, flipped) {
   }
 }
 
+function selectGoat(x, y, color='green') {
+  clear();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, 35, 0, 360);
+  ctx.fill();
+  redraw();
+}
+
 function removeGoatAndRedraw(goatIdToRemove) {
   delete goatById[goatIdToRemove];
   goatLocations = [];
@@ -99,19 +116,33 @@ function removeGoatAndRedraw(goatIdToRemove) {
     const center = goatById[gid];
     goatLocations.push(center);
   }
+  clearAndRedraw();
+}
+
+function clearAndRedraw() {
+  clear();
   redraw();
 }
 
-function redraw() {
+function clear() {
   ctx.clearRect(0, 0, width, height);
+}
+
+function redraw() {
   for (gid in goatById) {
     const {drawLoc, origOwner, flipped} = goatById[gid];
     const [x,y] = drawLoc;
-    const img = new Image();
-    img.onload = function() {
-      drawGoatAtPoint(img, x, y, flipped);
+    const imgId = origOwner.goatvatar-1;
+    if (!goatImgById.hasOwnProperty(imgId)) {
+      // not sure how this could run right now.
+      const img = new Image();
+      img.onload = function() {
+        drawGoatAtPoint(img, x, y, flipped);
+      }
+      img.src = `data:image/png;base64,${goatImgStrs[imgId]}`;
+    } else {
+      drawGoatAtPoint(goatImgById[imgId], x, y, flipped);
     }
-    img.src = `data:image/png;base64,${goat_imgs[origOwner.goatvatar-1]}`;
   }
 }
 
