@@ -23,7 +23,6 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from .models import db, User, Goat, Transaction
-from config import SECRET_KEY
 
 # Schema Objects
 class UserObject(SQLAlchemyObjectType):
