@@ -129,7 +129,7 @@ class CreateUser(graphene.Mutation):
             raise GraphQLError(e.message)
 
         for i in range(5):
-            goat = Goat(new_user.id)
+            goat = Goat(new_user.user_id)
             db.session.add(goat)
         db.session.commit()
         return CreateUser(user=new_user)
