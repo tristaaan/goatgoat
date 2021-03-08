@@ -30,7 +30,7 @@
         const goatCount = goats.edges.length;
         const tr = document.createElement("tr");
         tr.className = 'directory-row';
-        tr.appendChild(makeAvatarCell(goatvatar));
+        tr.appendChild(makeAvatarCell(goatvatar-1));
         tr.appendChild(makeNameLinkCell(name));
         tr.appendChild(makeCell(`${goatCount} goat${goatCount > 1 ? 's' : ''}`));
         directory.appendChild(tr);
