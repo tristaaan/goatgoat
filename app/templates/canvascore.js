@@ -146,10 +146,11 @@ function formatTimestamp(ts) {
 }
 
 function drawFlipped(img, x, y) {
+  ctx.save()
   ctx.translate(x+img.width, y);
   ctx.scale(-1,1);
   ctx.drawImage(img,0,0);
-  ctx.setTransform(1,0,0,1,0,0);
+  ctx.restore();
 }
 
 function distance(x1, y1, x2, y2) {
