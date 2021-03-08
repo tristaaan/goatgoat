@@ -49,7 +49,7 @@ class Query(graphene.ObjectType):
     node = graphene.relay.Node.Field()
 
     # USERs
-    all_users = SQLAlchemyConnectionField(UserObject)
+    all_users = SQLAlchemyConnectionField(UserObject.connection)
     user_by_id = graphene.Field(UserObject, user_id=graphene.Int())
     user_by_name = graphene.Field(UserObject, name=graphene.String())
     user_by_email = graphene.Field(UserObject, email=graphene.String())
@@ -67,14 +67,14 @@ class Query(graphene.ObjectType):
         return User.query.filter_by(email=email).first()
 
     # GOATs
-    all_goats = SQLAlchemyConnectionField(GoatObject)
+    all_goats = SQLAlchemyConnectionField(GoatObject.connection)
     goats_by_owner_id = graphene.List(GoatObject, id=graphene.Int())
     def resolve_goats_by_owner_id(self, info, **kwargs):
         _id = kwargs.get('id')
         return Goat.query.filter(Goat.owner_id == _id).all()
 
     # TRANSACTIONs
-    all_transactions = SQLAlchemyConnectionField(TransactionObject)
+    all_transactions = SQLAlchemyConnectionField(TransactionObject.connection)
     transactions_from = graphene.List(TransactionObject, user_id=graphene.Int())
     def resolve_transactions_from(self, info, **kwargs):
         user_id = kwargs.get('user_id')

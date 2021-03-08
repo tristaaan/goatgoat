@@ -32,6 +32,12 @@ def index():
   return render_template('home.html', logged_in=(get_credentials() is not None))
 
 
+@views.route('/ledger')
+def ledger():
+  data = get_credentials()
+  return render_template('ledger.html', logged_in=(get_credentials() is not None))
+
+
 # AUTH
 @views.route('/login', methods=['GET'])
 def login():

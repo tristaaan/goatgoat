@@ -10,8 +10,10 @@ db = SQLAlchemy()
 def now():
   return datetime.datetime.now()
 
+Base = declarative_base()
+Base.query = db.session.query_property()
 
-class User(db.Model):
+class User(Base):
   __tablename__ = 'users'
 
   user_id = db.Column('user_id', db.Integer, primary_key=True)
@@ -28,7 +30,7 @@ class User(db.Model):
     self.pw = password
 
 
-class Goat(db.Model):
+class Goat(Base):
   __tablename__ = 'goats'
   goat_id = db.Column('goat_id', db.Integer, primary_key=True)
   created = db.Column('created', db.DateTime, default=now)
@@ -52,7 +54,7 @@ class Goat(db.Model):
     self.original_owner_id = owner
 
 
-class Transaction(db.Model):
+class Transaction(Base):
   __tablename__ = 'transactions'
 
   transaction_id = db.Column('transaction_id', db.Integer, primary_key=True)
