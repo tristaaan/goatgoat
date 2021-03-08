@@ -23,12 +23,10 @@
     {% block content %}{% endblock %}
   </main>
   <script type="text/javascript">
-    document
-      .getElementById('logout')
-      .addEventListener('click', (e) => {
-        deleteCookie('token');
-        window.location.reload(false);
-      });
+    document.getElementById('logout')?.addEventListener('click', (e) => {
+      deleteCookie('token');
+      window.location.reload(false);
+    });
   </script>
   {% block scripts %}{% endblock %}
 </body>
