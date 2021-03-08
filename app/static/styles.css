@@ -19,3 +19,7 @@ nav ul li {
   width: 500px;
   height: 500px;
 }
+
+.directory-row {
+  line-height: 20px;
+}

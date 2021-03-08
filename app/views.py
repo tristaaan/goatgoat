@@ -38,6 +38,17 @@ def ledger():
   return render_template('ledger.html', logged_in=(get_credentials() is not None))
 
 
+@views.route('/directory')
+def directory():
+  data = get_credentials()
+  if data is None:
+    return redirect(f'/login', code=302)
+  return render_template('directory.html',
+    logged_in=(get_credentials() is not None),
+    goat_imgs=current_app.config['goat_imgs']
+  )
+
+
 # AUTH
 @views.route('/login', methods=['GET'])
 def login():
