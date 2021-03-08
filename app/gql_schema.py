@@ -60,7 +60,7 @@ class Query(graphene.ObjectType):
 
     def resolve_user_by_name(self, info, **kwargs):
         name = kwargs.get('name')
-        return User.query.filter_by(name=name).first()
+        return User.query.filter_by(name=name.lower()).first()
 
     def resolve_user_by_email(self, info, **kwargs):
         email = kwargs.get('email')
@@ -107,10 +107,11 @@ class CreateUser(graphene.Mutation):
         if password != confirm_password:
             raise GraphQLError('Passwords do not match')
 
-        if len(set.difference(set(username.lower()), set(string.ascii_lowercase+string.digits))) > 0:
+        username = username.lower()
+        if len(set.difference(set(username), set(string.ascii_lowercase+string.digits))) > 0:
             raise GraphQLError('Username can only have letters and numbers')
 
-        if username.lower() in ['settings', 'login', 'logout', 'forgot', 'reset', 'signup']:
+        if username in ['settings', 'login', 'logout', 'forgot', 'reset', 'signup', 'ledger']:
             raise GraphQLError('Invalid username')
 
         if db.session.query(User).filter(User.name == username).first():
@@ -145,6 +146,7 @@ class LoginUser(graphene.Mutation):
 
     def mutate(self, info, name, password):
         invalid_message = 'Invalid username or password'
+        name = name.lower()
         user = User.query.filter_by(name=name).first()
         if user is None:
             raise GraphQLError(invalid_message)
@@ -168,7 +170,7 @@ class UpdateUserEmail(graphene.Mutation):
     def mutate(self, info, new_email):
         name = get_jwt_identity()
         if name is not None:
-            user = User.query.filter_by(name=name).first()
+            user = User.query.filter_by(name=name.lower()).first()
             user.email = new_email
             try:
                 db.session.commit()
@@ -196,7 +198,7 @@ class UpdateUserPassword(graphene.Mutation):
         name = get_jwt_identity()
         if name is not None:
             hashed_password = generate_password_hash(new_password, method='sha256')
-            user = User.query.filter_by(name=name).first()
+            user = User.query.filter_by(name=name.lower()).first()
             user.pw = hashed_password
             try:
                 db.session.commit()
@@ -219,7 +221,7 @@ class UpdateUserGoat(graphene.Mutation):
     def mutate(self, info, new_goat):
         name = get_jwt_identity()
         if name is not None:
-            user = User.query.filter_by(name=name).first()
+            user = User.query.filter_by(name=name.lower()).first()
             user.goatvatar = new_goat
             try:
                 db.session.commit()
@@ -260,7 +262,7 @@ class TakeGoat(graphene.Mutation):
     def mutate(self, info, from_user, goat_id):
         name = get_jwt_identity()
         goat = Goat.query.filter_by(goat_id=goat_id).first()
-        to_user = User.query.filter_by(name=name).first()
+        to_user = User.query.filter_by(name=name.lower()).first()
         if to_user.user_id == from_user or to_user.user_id == goat.owner_id:
             raise GraphQLError('You cannot take your own goat')
 

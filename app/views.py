@@ -78,6 +78,7 @@ def user_settings():
 @views.route('/<username>', methods=['GET'])
 def userpage(username):
   token = request.cookies.get('token', None)
+  username = username.lower()
   user = User.query.filter_by(name=username).first();
   if token is not None:
     data = get_jwt_data(token, 'access')
