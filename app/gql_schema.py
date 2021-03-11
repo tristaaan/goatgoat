@@ -330,7 +330,7 @@ class StartTransaction(graphene.Mutation):
 
         # enqueue task
         tid = new_transaction.transaction_id
-        eta = datetime.utcnow() + timedelta(seconds=30)
+        eta = datetime.utcnow() + timedelta(minutes=1)
         transaction_completion.apply_async(kwargs={'transaction_id': tid}, eta=eta)
 
         # return goat
@@ -351,11 +351,11 @@ class CreateVote(graphene.Mutation):
         user = User.query.filter_by(name=name).first()
         # assert transaction is pending
         transaction = Transaction.query.filter_by(transaction_id=transaction_id).first()
-        if transaction.status != TransactionStatus.PENDING:
+        if TransactionStatus(transaction.status) != TransactionStatus.PENDING:
             return GraphQLError('Cannot vote on resolved transaction')
 
         # assert user has not double voted
-        old_votes = Vote.query.filter_by(transaction_id=transaction_id, voter_id=user_id).all()
+        old_votes = Vote.query.filter_by(transaction_id=transaction_id, voter_id=user.user_id).all()
         if len(old_votes) > 0:
             return GraphQLError('You have already voted on this transaction')
 

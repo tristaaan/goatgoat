@@ -27,4 +27,5 @@ nav ul li {
 .transaction-result {
   text-align: center;
   text-decoration: underline;
+  text-transform: capitalize;
 }

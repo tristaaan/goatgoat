@@ -5,13 +5,14 @@
   <p>To: <span>{{transaction.to_user.name}}</span></p>
   <p>From: <span>{{transaction.from_user.name}}</span></p>
   {% if transaction.status == 'pending' %}
-    <div>
-      <button class='approve-button'>Approve</button>
-      <button class='deny-button'>Deny</button>
+    <div class="vote-form">
+      <button class="approve-button">Approve</button>
+      <button class="deny-button">Deny</button>
     </div>
+    <span class="vote-error"></span>
   {% endif %}
   <h2 class='transaction-result'>
-    {{'Approved' if transaction.status == 'approved' else 'Denied'}}
+    {{ transaction.status }}
   </h2>
   <h2>Votes:</h2>
   <ul>
@@ -33,7 +34,16 @@
   function formatTimestamp(ts) {
     return new Date(ts).toLocaleString();
   }
-  document.querySelector('approve-button')?.addEventListener('click', () => {
+
+  function setError(message) {
+    document.querySelector('.vote-error').textContent = message;
+  }
+
+  function voteComplete() {
+    document.querySelector('.vote-form').style.display = 'none';
+  }
+
+  document.querySelector('.approve-button')?.addEventListener('click', () => {
     const token = getCookie('token');
     const transactionId = {{transaction.transaction_id}};
     const value = 1;
@@ -45,13 +55,13 @@
       {token, transactionId, value},
       'CreateVote'
       ).then((json) => {
-
+        voteComplete()
       }).catch((json) => {
-
+        setError(json.errors[0].message);
       });
   });
 
-  document.querySelector('deny-button')?.addEventListener('click', () => {
+  document.querySelector('.deny-button')?.addEventListener('click', () => {
     const token = getCookie('token');
     const transactionId = {{transaction.transaction_id}};
     const value = -1;
@@ -63,9 +73,9 @@
       {token, transactionId, value},
       'CreateVote'
       ).then((json) => {
-
+        voteComplete()
       }).catch((json) => {
-
+        setError(json.errors[0].message);
       });
   });
 </script>
