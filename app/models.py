@@ -1,8 +1,9 @@
 import datetime
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, validates
 from sqlalchemy.ext.declarative import declarative_base
 from flask_sqlalchemy import SQLAlchemy
 
+from .enums import TransactionStatus
 
 db = SQLAlchemy()
 
@@ -13,7 +14,7 @@ def now():
 Base = declarative_base()
 Base.query = db.session.query_property()
 
-class User(Base):
+class User(db.Model, Base):
   __tablename__ = 'users'
 
   user_id = db.Column('user_id', db.Integer, primary_key=True)
@@ -30,7 +31,7 @@ class User(Base):
     self.pw = password
 
 
-class Goat(Base):
+class Goat(db.Model, Base):
   __tablename__ = 'goats'
   goat_id = db.Column('goat_id', db.Integer, primary_key=True)
   created = db.Column('created', db.DateTime, default=now)
@@ -54,12 +55,14 @@ class Goat(Base):
     self.original_owner_id = owner
 
 
-class Transaction(Base):
+class Transaction(db.Model, Base):
   __tablename__ = 'transactions'
 
   transaction_id = db.Column('transaction_id', db.Integer, primary_key=True)
   goat_id = db.Column('goat_id', db.Integer, db.ForeignKey('goats.goat_id'), nullable=False)
   timestamp = db.Column('timestamp', db.DateTime, default=now)
+  resolved = db.Column('resolved', db.DateTime, nullable=True)
+  status = db.Column('status', db.String, nullable=True)
 
   from_user_id = db.Column('from_user', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
   from_user = relationship(
@@ -76,3 +79,46 @@ class Transaction(Base):
     self.from_user_id = from_user
     self.to_user_id = to_user
     self.goat_id = goat
+    self.status = TransactionStatus.PENDING.value
+
+  @validates('status')
+  def validate_status(self, key, value):
+    assert TransactionStatus(value) in {
+      TransactionStatus.APPROVED,
+      TransactionStatus.DENIED,
+      TransactionStatus.PENDING
+    }
+    return value
+
+
+class Vote(db.Model, Base):
+  __tablename__ = 'votes'
+
+  vote_id = db.Column('vote_id', db.Integer, primary_key=True)
+  created = db.Column('created', db.DateTime, default=now)
+  voter_id = db.Column('voter_id', db.Integer, db.ForeignKey('users.user_id'))
+  voter = relationship(
+    User,
+    foreign_keys=[voter_id]
+  )
+
+  transaction_id = db.Column('transaction_id', db.Integer, db.ForeignKey('transactions.transaction_id'))
+  transaction = relationship(
+    Transaction,
+    foreign_keys=[transaction_id],
+    backref=backref('votes',
+      uselist=True,
+      cascade='delete,all'
+    )
+  )
+  value = db.Column('value', db.Integer, nullable=False) # 0 negative, 1 positive
+
+  def __init__(self, transaction_id, voter_id, value):
+    self.transaction_id = transaction_id
+    self.voter_id = voter_id
+    self.value = value
+
+  @validates('value')
+  def validate_value(self, key, value):
+    assert value in {-1, 1}
+    return value

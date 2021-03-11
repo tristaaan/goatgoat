@@ -1,6 +1,6 @@
 import uuid
-import datetime
 import string
+from datetime import datetime, timedelta
 
 import jwt
 import time
@@ -22,7 +22,9 @@ from flask_graphql_auth import (
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from .models import db, User, Goat, Transaction
+from .enums import TransactionStatus
+from .models import db, User, Goat, Transaction, Vote
+from .tasks import transaction_completion
 
 # Schema Objects
 class UserObject(SQLAlchemyObjectType):
@@ -31,19 +33,24 @@ class UserObject(SQLAlchemyObjectType):
         interfaces = (graphene.relay.Node, )
         exclude_fields=('pw', 'pwResetToken', 'pwResetExpires')
 
+
 class GoatObject(SQLAlchemyObjectType):
     class Meta:
         model = Goat
         interfaces = (graphene.relay.Node, )
+
 
 class TransactionObject(SQLAlchemyObjectType):
     class Meta:
         model = Transaction
         interfaces = (graphene.relay.Node, )
 
-# TODO:
-# get transactions by user
-# get goats by user
+
+class VoteObject(SQLAlchemyObjectType):
+    class Meta:
+        model = Vote
+        interfaces = (graphene.relay.Node, )
+
 
 class Query(graphene.ObjectType):
     node = graphene.relay.Node.Field()
@@ -91,6 +98,12 @@ class Query(graphene.ObjectType):
     def resolve_transactions_for_goat(self, info, **kwargs):
         goat_id = kwargs['goat_id']
         return Transaction.query.filter_by(goat_id=goat_id).all()
+
+    # VOTEs
+    votes_for_transaction = graphene.List(VoteObject, transaction_id=graphene.Int())
+    def resolve_votes_for_transaction(self, info, **kwargs):
+        transaction_id = kwargs.get('transaction_id')
+        return Vote.query.filter_by(transaction_id=transaction_id).all()
 
 
 # Mutations
@@ -282,18 +295,82 @@ class TakeGoat(graphene.Mutation):
         return TakeGoat(transaction=new_transaction)
 
 
-# class GiveGoat(TakeGoat):
-#     def mutate(self, info, from_user, to_user, goat_id):
-#         # create transaction
-#         new_transaction = Transaction(from_user, to_user, goat_id)
-#         db.session.add(new_transaction)
+class StartTransaction(graphene.Mutation):
+    class Arguments:
+        token = graphene.String()
+        from_user = graphene.Int()
+        goat_id = graphene.Int()
 
-#         # update goat
-#         db.session.update(Goat).where(Goat.id == goat_id).values(owner_id=to_user)
+    transaction = graphene.Field(TransactionObject)
 
-#         # commit
-#         db.session.commit()
-#         return GiveGoat(transaction=new_transaction)
+    @mutation_jwt_required
+    def mutate(self, info, from_user, goat_id):
+        name = get_jwt_identity()
+        goat = Goat.query.filter_by(goat_id=goat_id).first()
+        to_user = User.query.filter_by(name=name.lower()).first()
+        # user cannot take their own goat
+        if to_user.user_id == from_user or to_user.user_id == goat.owner_id:
+            raise GraphQLError('You cannot take your own goat')
+
+        existing_transactions = Transaction.query.filter_by(
+            goat_id=goat.goat_id, status=TransactionStatus.PENDING.value).all()
+        if len(existing_transactions) > 0:
+            raise GraphQLError('There already exists a transaction for this goat')
+
+        # create transaction
+        new_transaction = Transaction(from_user, to_user.user_id, goat_id)
+        db.session.add(new_transaction)
+
+        # commit
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            raise GraphQLError(e.message)
+
+        # enqueue task
+        tid = new_transaction.transaction_id
+        eta = datetime.utcnow() + timedelta(seconds=30)
+        transaction_completion.apply_async(kwargs={'transaction_id': tid}, eta=eta)
+
+        # return goat
+        return StartTransaction(transaction=new_transaction)
+
+
+class CreateVote(graphene.Mutation):
+    class Arguments:
+        token = graphene.String()
+        transaction_id = graphene.Int()
+        value = graphene.Int()
+
+    status = graphene.Boolean()
+
+    @mutation_jwt_required
+    def mutate(self, info, transaction_id, value):
+        name = get_jwt_identity()
+        user = User.query.filter_by(name=name).first()
+        # assert transaction is pending
+        transaction = Transaction.query.filter_by(transaction_id=transaction_id).first()
+        if transaction.status != TransactionStatus.PENDING:
+            return GraphQLError('Cannot vote on resolved transaction')
+
+        # assert user has not double voted
+        old_votes = Vote.query.filter_by(transaction_id=transaction_id, voter_id=user_id).all()
+        if len(old_votes) > 0:
+            return GraphQLError('You have already voted on this transaction')
+
+        # assert user is not the to_user in transaction
+        if user.user_id == transaction.to_user_id:
+            return GraphQLError('You cannot vote on a transaction that you initiated')
+
+        new_vote = Vote(transaction_id, user.user_id, value)
+        db.session.add(new_vote)
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            raise GraphQLError(e.message)
+        return CreateVote(status=True)
 
 
 class Mutation(graphene.ObjectType):
@@ -307,6 +384,8 @@ class Mutation(graphene.ObjectType):
     take_goat = TakeGoat.Field()
     # give_goat = GiveGoat.Field()
 
+    start_transaction = StartTransaction.Field()
+    create_vote = CreateVote.Field()
 
 schema = graphene.Schema(
     query=Query,

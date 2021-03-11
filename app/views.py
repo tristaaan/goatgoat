@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, current_app
 from flask_graphql_auth import get_jwt_data
 from sqlalchemy.sql import select, func
 
-from .models import db, User
+from .models import db, User, Transaction
 
 views = Blueprint('views', __name__, template_folder='templates')
 
@@ -69,6 +69,13 @@ def reset():
 def forgot():
   return render_template('forgot.html')
 
+# TRANSACTION
+@views.route('/transaction/<tid>')
+def transaction_page(tid):
+  transaction = Transaction.query.filter_by(transaction_id=tid).first();
+  if transaction is not None:
+    return render_template('transaction-page.html', transaction=transaction)
+  return render_template('null-transaction-page.html', tid=tid)
 
 # USER
 @views.route('/settings', methods=['GET'])

@@ -15,7 +15,7 @@
         <a class="transactions-user-label"></a>
       </li>
     </ul>
-    <button class="steal-button" style="display: none;">Steal!</button>
+    <button class="claim-button" style="display: none;">Claim!</button>
   </div>
 {% endblock %}
 
@@ -29,7 +29,7 @@
   const transactionRow = document.querySelector('.transaction-row');
   const transactionDateLabel = document.querySelector('.transactions-date-label');
   const transactionUserLabel = document.querySelector('.transactions-user-label');
-  const stealButton = document.querySelector('.steal-button');
+  const claimButton = document.querySelector('.claim-button');
   let selectedGoatId = null;
 
   function didClick(x,y) {
@@ -47,7 +47,7 @@
     } else {
       ownerLabel.removeAttribute('href');
     }
-    stealButton.style.display = 'block';
+    claimButton.style.display = 'block';
     sendQuery(
       `{
         transactionsForGoat(goatId: ${selectedGoatId}) {
@@ -71,20 +71,20 @@
     });
   }
 
-  stealButton.addEventListener('click', (e) => {
+  claimButton.addEventListener('click', (e) => {
     const fromUser = goatById[selectedGoatId].origOwner.userId;
     const goatId = selectedGoatId;
     const token = getCookie('token');
     sendQuery(
-      `mutation TakeGoat($fromUser:Int!, $goatId:Int!, $token:String!) {
-        takeGoat(fromUser:$fromUser, goatId:$goatId, token:$token) {
+      `mutation StartTransaction($fromUser:Int!, $goatId:Int!, $token:String!) {
+        startTransaction(fromUser:$fromUser, goatId:$goatId, token:$token) {
           transaction {
             transactionId
           }
         }
       }`,
       {fromUser, goatId, token},
-      'TakeGoat'
+      'StartTransaction'
     ).then((json) => {
       removeGoatAndRedraw(selectedGoatId);
       selectedGoatId = null;
