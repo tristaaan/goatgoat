@@ -330,7 +330,7 @@ class StartTransaction(graphene.Mutation):
 
         # enqueue task
         tid = new_transaction.transaction_id
-        eta = datetime.utcnow() + timedelta(minutes=1)
+        eta = datetime.utcnow() + timedelta(minutes=5)
         transaction_completion.apply_async(kwargs={'transaction_id': tid}, eta=eta)
 
         # return goat

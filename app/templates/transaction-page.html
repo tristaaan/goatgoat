@@ -10,6 +10,7 @@
       <button class="deny-button">Deny</button>
     </div>
     <span class="vote-error"></span>
+    <span>Remaining: <span class="resolve_timer">...</span></span>
   {% else %}
     <div>
       <p>Initiated: {{ transaction.timestamp }}</p>
@@ -48,6 +49,31 @@
     document.querySelector('.vote-form').style.display = 'none';
   }
 
+  function startResolveTimer() {
+    const timerOutput = document.querySelector('.resolve_timer');
+    if (!timerOutput) {
+      return;
+    }
+    const initiated = new Date('{{transaction.timestamp}}');
+    const resolveTime = new Date('{{transaction.timestamp}}');
+    resolveTime.setTime(resolveTime.getTime() + (1000 * 60 * 5));
+    console.log(initiated, resolveTime);
+    let timer = setInterval(() => {
+      const seconds = Math.floor((new Date() - resolveTime) / 1000) * -1;
+      if (seconds <= 0) {
+        timerOutput.textContent = 'Resolving...';
+        clearInterval(timer);
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      } else {
+        const minutesFmt = Math.floor(seconds / 60);
+        const secondsFmt = (seconds % 60) < 10 ? `0${seconds % 60}` : (seconds % 60);
+        timerOutput.textContent = `${minutesFmt}:${secondsFmt}`;
+      }
+    }, 1000);
+  }
+
   document.querySelector('.approve-button')?.addEventListener('click', () => {
     const token = getCookie('token');
     const transactionId = {{transaction.transaction_id}};
@@ -83,5 +109,6 @@
         setError(json.errors[0].message);
       });
   });
+  startResolveTimer();
 </script>
 {% endblock %}
