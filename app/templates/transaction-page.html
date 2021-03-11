@@ -10,6 +10,11 @@
       <button class="deny-button">Deny</button>
     </div>
     <span class="vote-error"></span>
+  {% else %}
+    <div>
+      <p>Initiated: {{ transaction.timestamp }}</p>
+      <p>Resolved: {{ transaction.resolved }}</p>
+    </div>
   {% endif %}
   <h2 class='transaction-result'>
     {{ transaction.status }}
