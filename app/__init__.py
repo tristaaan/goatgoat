@@ -14,6 +14,8 @@ from .models import db
 celery = Celery(__name__)
 celery.config_from_object('celery_config')
 
+migrate = None
+
 def create_app():
   # initializing our app
   app = Flask(__name__)
@@ -57,6 +59,8 @@ def create_app():
   @app.teardown_appcontext
   def shutdown_session(exception=None):
       db.session.remove()
+
+  migrate = Migrate(app, db)
 
   return app
 
