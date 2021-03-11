@@ -2,19 +2,26 @@
 
 {% block content %}
   <h1>Ledger</h1>
-  <p>From: <span>{{transaction.from_user.name}}</span></p>
   <p>To: <span>{{transaction.to_user.name}}</span></p>
-
-  <div>
-    <button>Approve</button>
-    <button>Deny</button>
-  </div>
-
+  <p>From: <span>{{transaction.from_user.name}}</span></p>
+  {% if transaction.status == 'pending' %}
+    <div>
+      <button class='approve-button'>Approve</button>
+      <button class='deny-button'>Deny</button>
+    </div>
+  {% endif %}
+  <h2 class='transaction-result'>
+    {{'Approved' if transaction.status == 'approved' else 'Denied'}}
+  </h2>
   <h2>Votes:</h2>
   <ul>
-    {% for vote in transaction.votes %}
-    <li>{{vote.voter.name}} : {{'yay' if vote.value > 0 else 'nay'}}</li>
-    {% endfor %}
+    {% if transaction.votes | length == 0 %}
+      <li>No votes</li>
+    {% else %}
+      {% for vote in transaction.votes %}
+      <li>{{vote.voter.name}} : {{'yay' if vote.value > 0 else 'nay'}}</li>
+      {% endfor %}
+    {% endif %}
   </ul>
 {% endblock %}
 
@@ -22,17 +29,44 @@
 <script type="text/javascript">
   const tid = '{{transaction.transaction_id}}';
   const ledger = document.querySelector('.ledger');
-  sendQuery(
-    ``)
-    .then((json) => {
-
-    })
-    .catch((json) => {
-      console.log(json);
-    });
 
   function formatTimestamp(ts) {
     return new Date(ts).toLocaleString();
   }
+  document.querySelector('approve-button')?.addEventListener('click', () => {
+    const token = getCookie('token');
+    const transactionId = {{transaction.transaction_id}};
+    const value = 1;
+    sendQuery(`mutation CreateVote($token:String!,$transactionId:Int!,$value:Int!) {
+        createVote(token:$token, transactionId:$transactionId, value:$value) {
+          status
+        }
+      }`,
+      {token, transactionId, value},
+      'CreateVote'
+      ).then((json) => {
+
+      }).catch((json) => {
+
+      });
+  });
+
+  document.querySelector('deny-button')?.addEventListener('click', () => {
+    const token = getCookie('token');
+    const transactionId = {{transaction.transaction_id}};
+    const value = -1;
+    sendQuery(`mutation CreateVote($token:String!,$transactionId:Int!,$value:Int!) {
+        createVote(token:$token, transactionId:$transactionId, value:$value) {
+          status
+        }
+      }`,
+      {token, transactionId, value},
+      'CreateVote'
+      ).then((json) => {
+
+      }).catch((json) => {
+
+      });
+  });
 </script>
 {% endblock %}

@@ -23,3 +23,8 @@ nav ul li {
 .directory-row {
   line-height: 20px;
 }
+
+.transaction-result {
+  text-align: center;
+  text-decoration: underline;
+}

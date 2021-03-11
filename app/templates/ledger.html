@@ -12,6 +12,8 @@
     `{ allTransactions(sort:TIMESTAMP_DESC) {
       edges {
         node {
+          transactionId
+          status
           fromUser {
             name
           }
@@ -25,12 +27,13 @@
     .then((json) => {
       const transactions = json.data.allTransactions.edges;
       for ({node} of transactions) {
-        const {fromUser, toUser, timestamp} = node;
+        const {transactionId, status, fromUser, toUser, timestamp} = node;
         const tr = document.createElement("tr");
-        tr.appendChild(makeNameLinkCell(fromUser.name));
-        tr.appendChild(makeCell('➔'));
         tr.appendChild(makeNameLinkCell(toUser.name));
+        tr.appendChild(makeCell('<-'));
+        tr.appendChild(makeNameLinkCell(fromUser.name));
         tr.appendChild(makeCell(formatTimestamp(timestamp)));
+        tr.appendChild(makeTransactionLinkCell(transactionId, status));
         ledger.appendChild(tr);
       }
     })
@@ -49,6 +52,15 @@
     const a = document.createElement('a');
     a.textContent = contents;
     a.href = `/${contents}`;
+    cell.appendChild(a);
+    return cell;
+  }
+
+  function makeTransactionLinkCell(tid, status) {
+    const cell = document.createElement('td');
+    const a = document.createElement('a');
+    a.textContent = status;
+    a.href = `/transaction/${tid}`;
     cell.appendChild(a);
     return cell;
   }
