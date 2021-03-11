@@ -14,7 +14,7 @@ from .models import db
 celery = Celery(__name__)
 celery.config_from_object('celery_config')
 
-migrate = None
+migrate = Migrate()
 
 def create_app():
   # initializing our app
@@ -37,6 +37,7 @@ def create_app():
       )
   )
   db.init_app(app)
+  migrate.init_app(app, db)
   GraphQLAuth(app)
 
   # Flask request setup
@@ -60,8 +61,4 @@ def create_app():
   def shutdown_session(exception=None):
       db.session.remove()
 
-  migrate = Migrate(app, db)
-
   return app
-
-
