@@ -16,8 +16,8 @@
     <p>Remaining: <span class="resolve_timer">...</span></p>
   {% else %}
     <div>
-      <p>Initiated: {{ transaction.timestamp ~ 'Z' }}</p>
-      <p>Resolved: {{ transaction.resolved ~ 'Z' }}</p>
+      <p>Initiated: <span class="initiated-time"></span></p>
+      <p>Resolved: <span class="resolved-time"></span></p>
     </div>
   {% endif %}
   <h2 class='transaction-result'>
@@ -52,9 +52,19 @@
     document.querySelector('.vote-form').style.display = 'none';
   }
 
+  function formaTimeResolutions() {
+    document.querySelector('.initiated-time')
+      .textContent = formatTimestamp('{{transaction.timestamp}}');
+
+    document.querySelector('.resolved-time')
+      .textContent = formatTimestamp('{{transaction.resolved}}');
+
+  }
+
   function startResolveTimer() {
     const timerOutput = document.querySelector('.resolve_timer');
     if (!timerOutput) {
+      formaTimeResolutions();
       return;
     }
     const initiated = new Date('{{transaction.timestamp ~ 'Z'}}');
