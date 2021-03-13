@@ -79,8 +79,10 @@ def transaction_page(tid):
       name = data['identity']
       has_voted = name in {vote.voter.name for vote in transaction.votes}
     else:
+      name = None;
       has_voted = False
     return render_template('transaction-page.html',
+      name=name,
       transaction=transaction,
       has_voted=has_voted,
       logged_in=(data is not None)
