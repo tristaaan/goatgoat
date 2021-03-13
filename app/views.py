@@ -29,13 +29,13 @@ def index():
   if data is not None:
     username = data['identity']
     return redirect(f'/{username}', code=302)
-  return render_template('home.html', logged_in=(get_credentials() is not None))
+  return render_template('home.html', logged_in=(data is not None))
 
 
 @views.route('/ledger')
 def ledger():
   data = get_credentials()
-  return render_template('ledger.html', logged_in=(get_credentials() is not None))
+  return render_template('ledger.html', logged_in=(data is not None))
 
 
 @views.route('/directory')
@@ -72,9 +72,19 @@ def forgot():
 # TRANSACTION
 @views.route('/transaction/<tid>')
 def transaction_page(tid):
+  data = get_credentials()
   transaction = Transaction.query.filter_by(transaction_id=tid).first();
   if transaction is not None:
-    return render_template('transaction-page.html', transaction=transaction)
+    if data is not None and 'identity' in data:
+      name = data['identity']
+      has_voted = name in {vote.voter.name for vote in transaction.votes}
+    else:
+      has_voted = False
+    return render_template('transaction-page.html',
+      transaction=transaction,
+      has_voted=has_voted,
+      logged_in=(data is not None)
+    )
   return render_template('null-transaction-page.html', tid=tid)
 
 # USER
