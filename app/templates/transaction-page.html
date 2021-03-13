@@ -16,8 +16,8 @@
     <p>Remaining: <span class="resolve_timer">...</span></p>
   {% else %}
     <div>
-      <p>Initiated: {{ transaction.timestamp }}</p>
-      <p>Resolved: {{ transaction.resolved }}</p>
+      <p>Initiated: {{ transaction.timestamp ~ 'Z' }}</p>
+      <p>Resolved: {{ transaction.resolved ~ 'Z' }}</p>
     </div>
   {% endif %}
   <h2 class='transaction-result'>
