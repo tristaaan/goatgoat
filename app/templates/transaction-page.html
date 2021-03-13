@@ -41,7 +41,7 @@
   const ledger = document.querySelector('.ledger');
 
   function formatTimestamp(ts) {
-    return new Date(ts).toLocaleString();
+    return new Date(ts + 'Z').toLocaleString();
   }
 
   function setError(message) {
@@ -57,8 +57,8 @@
     if (!timerOutput) {
       return;
     }
-    const initiated = new Date('{{transaction.timestamp}}');
-    const resolveTime = new Date('{{transaction.timestamp}}');
+    const initiated = new Date('{{transaction.timestamp ~ 'Z'}}');
+    const resolveTime = new Date('{{transaction.timestamp ~ 'Z'}}');
     resolveTime.setTime(resolveTime.getTime() + (1000 * 60 * 5));
     console.log(initiated, resolveTime);
     let timer = setInterval(() => {

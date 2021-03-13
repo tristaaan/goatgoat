@@ -142,7 +142,7 @@ function redraw() {
 }
 
 function formatTimestamp(ts) {
-  return new Date(ts).toLocaleString();
+  return new Date(ts + 'Z').toLocaleString();
 }
 
 function drawFlipped(img, x, y) {

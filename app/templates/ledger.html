@@ -66,7 +66,7 @@
   }
 
   function formatTimestamp(ts) {
-    return new Date(ts).toLocaleString();
+    return new Date(ts + 'Z').toLocaleString();
   }
 </script>
 {% endblock %}
