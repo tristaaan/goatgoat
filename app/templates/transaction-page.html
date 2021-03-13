@@ -4,7 +4,7 @@
   <h1>Ledger</h1>
   <p>To: <span>{{transaction.to_user.name}}</span></p>
   <p>From: <span>{{transaction.from_user.name}}</span></p>
-  {% if name == transaction.to_user.name %}
+  {% if transaction.status == 'pending' and name == transaction.to_user.name %}
     <h3>You cannot vote in your own claim</h3>
     <p>Remaining: <span class="resolve_timer">...</span></p>
   {% elif transaction.status == 'pending' and not has_voted %}
