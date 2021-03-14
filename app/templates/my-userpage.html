@@ -14,7 +14,7 @@
         <span class="transactions-date-label"></span>
         from
         <a class="transactions-user-label"></a>
-        <span class=transaction-reason></span>
+        <p class="transaction-reason"></p>
       </li>
     </ul>
   </div>
@@ -58,6 +58,7 @@
         transactionsForGoat(goatId: ${selectedGoatId}) {
           fromUser { name }
           timestamp
+          resolved
           reason
         }
       }`
@@ -68,10 +69,13 @@
       } else {
         transactionRow.style.display = 'block';
       }
-      const {fromUser, timestamp, reason} = json.data.transactionsForGoat[0];
+      const transactions = json.data.transactionsForGoat.sort((a, b) => {
+        return Date.parse(b.resolved) - Date.parse(a.resolved);
+      });
+      const {fromUser, timestamp, reason} = transactions[0];
       transactionDateLabel.textContent = `${formatTimestamp(timestamp)}`;
       if (reason && reason.length) {
-        transactionReason.textContent = reason;
+        transactionReason.textContent = `"${reason}"`;
       }
       const {name} = fromUser;
       transactionUserLabel.textContent = name;

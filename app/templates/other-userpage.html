@@ -14,6 +14,7 @@
         from
         <a class="transactions-user-label"></a>
         <span class=transaction-reason></span>
+        <p class="transaction-reason"></p>
       </li>
     </ul>
     <textarea class="claim-reason"
@@ -75,7 +76,7 @@
       transactionRow.style.display = 'block';
       transactionDateLabel.textContent = `${formatTimestamp(timestamp)}`;
       if (reason && reason.length) {
-        transactionReason.textContent = reason;
+        transactionReason.textContent = `"${reason}"`;
       }
       const {name} = fromUser;
       transactionUserLabel.textContent = name;
