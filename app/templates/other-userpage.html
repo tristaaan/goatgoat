@@ -13,9 +13,16 @@
         <span class="transactions-date-label"></span>
         from
         <a class="transactions-user-label"></a>
+        <span class=transaction-reason></span>
       </li>
     </ul>
+    <textarea class="claim-reason"
+      placeholder="why are you claiming this goat?"
+      maxlength="128"
+      value=""
+    ></textarea>
     <button class="claim-button" style="display: none;">Claim!</button>
+    <span class="claim-error"></span>
   </div>
 {% endblock %}
 
@@ -29,7 +36,10 @@
   const transactionRow = document.querySelector('.transaction-row');
   const transactionDateLabel = document.querySelector('.transactions-date-label');
   const transactionUserLabel = document.querySelector('.transactions-user-label');
+  const transactionReason = document.querySelector('.transaction-reason');
+  const claimReason = document.querySelector('.claim-reason');
   const claimButton = document.querySelector('.claim-button');
+  const claimError = document.querySelector('.claim-error');
   let selectedGoatId = null;
 
   function didClick(x,y) {
@@ -53,6 +63,7 @@
         transactionsForGoat(goatId: ${selectedGoatId}) {
           fromUser { name }
           timestamp
+          reason
         }
       }`
     ).then((json) => {
@@ -60,9 +71,12 @@
         transactionRow.style.display = 'none';
         return;
       }
-      const {fromUser, timestamp} = json.data.transactionsForGoat[0];
+      const {fromUser, timestamp, reason} = json.data.transactionsForGoat[0];
       transactionRow.style.display = 'block';
       transactionDateLabel.textContent = `${formatTimestamp(timestamp)}`;
+      if (reason && reason.length) {
+        transactionReason.textContent = reason;
+      }
       const {name} = fromUser;
       transactionUserLabel.textContent = name;
       transactionUserLabel.href = `/${name}`;
@@ -72,25 +86,26 @@
   }
 
   claimButton.addEventListener('click', (e) => {
-    const fromUser = goatById[selectedGoatId].origOwner.userId;
+    const fromUser = goatById[selectedGoatId].ownerId;
     const goatId = selectedGoatId;
     const token = getCookie('token');
+    const reason = claimReason.value;
     sendQuery(
-      `mutation StartTransaction($fromUser:Int!, $goatId:Int!, $token:String!) {
-        startTransaction(fromUser:$fromUser, goatId:$goatId, token:$token) {
+      `mutation StartTransaction($fromUser:Int!, $goatId:Int!, $reason:String!, $token:String!) {
+        startTransaction(fromUser:$fromUser, goatId:$goatId, reason:$reason, token:$token) {
           transaction {
             transactionId
           }
         }
       }`,
-      {fromUser, goatId, token},
+      {fromUser, goatId, reason, token},
       'StartTransaction'
     ).then((json) => {
       removeGoatAndRedraw(selectedGoatId);
       selectedGoatId = null;
       goatPanel.style.display = 'none';
     }).catch((json) => {
-      console.log(json);
+      claimError.textContent = json.errors[0].message;
     });
   });
 </script>

@@ -63,6 +63,7 @@ class Transaction(db.Model, Base):
   timestamp = db.Column('timestamp', db.DateTime, default=now)
   resolved = db.Column('resolved', db.DateTime, nullable=True)
   status = db.Column('status', db.String, nullable=True)
+  reason = db.Column('reason', db.String(128), nullable=True)
 
   from_user_id = db.Column('from_user', db.Integer, db.ForeignKey('users.user_id'), nullable=False)
   from_user = relationship(
@@ -75,11 +76,12 @@ class Transaction(db.Model, Base):
     foreign_keys=[to_user_id]
   )
 
-  def __init__(self, from_user, to_user, goat):
+  def __init__(self, from_user, to_user, goat, reason):
     self.from_user_id = from_user
     self.to_user_id = to_user
     self.goat_id = goat
     self.status = TransactionStatus.PENDING.value
+    self.reason = reason
 
   @validates('status')
   def validate_status(self, key, value):

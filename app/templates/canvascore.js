@@ -51,6 +51,7 @@ sendQuery(
         edges {
           node {
             goatId
+            ownerId
             originalOwner {
               userId
               name
@@ -63,14 +64,14 @@ sendQuery(
   }`
 ).then((json) => {
   json.data.userByName.goats.edges.forEach(({node}) => {
-    drawGoatAtRandomPoint(node.originalOwner, node.goatId);
+    drawGoatAtRandomPoint(node.originalOwner, node.goatId, node.ownerId);
   });
 })
 .catch((json) => {
   console.error(json);
 });
 
-function drawGoatAtRandomPoint(origOwner, goatId) {
+function drawGoatAtRandomPoint(origOwner, goatId, ownerId) {
   const margin = 50;
   const flipped = Math.random() > 0.5;
   const rX = margin + Math.random() * (width - margin*2);
@@ -81,7 +82,7 @@ function drawGoatAtRandomPoint(origOwner, goatId) {
     drawGoatAtPoint(img, rX, rY, flipped);
     const center = [rX + img.width/2, rY + img.height/2, goatId];
     goatLocations.push(center);
-    goatById[goatId] = {drawLoc: [rX, rY], center, origOwner, flipped};
+    goatById[goatId] = {drawLoc: [rX, rY], center, origOwner, ownerId, flipped};
     goatImgById[imgId] = img;
   }
   img.src = `data:image/png;base64,${goatImgStrs[imgId]}`;

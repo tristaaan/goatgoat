@@ -9,10 +9,12 @@
   <div class="info-panel" style="display: none;">
     <ul>
       <li>Original owner: <a class="original-owner-label"></a></li>
-      <li class="transaction-row" style="display: none;">Last transaction:
+      <li class="transaction-row" style="display: none;">
+        Last transaction:
         <span class="transactions-date-label"></span>
         from
         <a class="transactions-user-label"></a>
+        <span class=transaction-reason></span>
       </li>
     </ul>
   </div>
@@ -34,6 +36,7 @@
   const transactionDateLabel = document.querySelector('.transactions-date-label');
   const transactionUserLabel = document.querySelector('.transactions-user-label');
   const transactionLog = document.querySelector('.transaction-log');
+  const transactionReason = document.querySelector('.transaction-reason');
 
   function didClick(x,y) {
     const gid = goatNearestToClick(x,y);
@@ -55,6 +58,7 @@
         transactionsForGoat(goatId: ${selectedGoatId}) {
           fromUser { name }
           timestamp
+          reason
         }
       }`
     ).then((json) => {
@@ -64,8 +68,11 @@
       } else {
         transactionRow.style.display = 'block';
       }
-      const {fromUser, timestamp} = json.data.transactionsForGoat[0];
+      const {fromUser, timestamp, reason} = json.data.transactionsForGoat[0];
       transactionDateLabel.textContent = `${formatTimestamp(timestamp)}`;
+      if (reason && reason.length) {
+        transactionReason.textContent = reason;
+      }
       const {name} = fromUser;
       transactionUserLabel.textContent = name;
       transactionUserLabel.href = `/${name}`;

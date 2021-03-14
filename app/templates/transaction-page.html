@@ -2,8 +2,23 @@
 
 {% block content %}
   <h1>Ledger</h1>
-  <p>To: <span>{{transaction.to_user.name}}</span></p>
-  <p>From: <span>{{transaction.from_user.name}}</span></p>
+  <p>To:
+    <span>
+      <a href="/{{transaction.from_user.name}}">
+        {{transaction.to_user.name}}
+      </a>
+    </span>
+  </p>
+  <p>From:
+    <span>
+      <a href="/{{transaction.from_user.name}}">
+        {{transaction.from_user.name}}
+      </a>
+    </span>
+  </p>
+  {% if transaction.reason %}
+    <p>Reason: "{{transaction.reason}}"<p>
+  {% endif %}
   {% if transaction.status == 'pending' and name == transaction.to_user.name %}
     <h3>You cannot vote in your own claim</h3>
     <p>Remaining: <span class="resolve_timer">...</span></p>
@@ -27,7 +42,7 @@
     {{ transaction.status }}
   </h2>
   <h2>Votes:</h2>
-  <ul>
+  <ul class="vote-list">
     {% if transaction.votes | length == 0 %}
       <li>No votes</li>
     {% else %}
@@ -42,6 +57,7 @@
 <script type="text/javascript">
   const tid = '{{transaction.transaction_id}}';
   const ledger = document.querySelector('.ledger');
+  const voteList = document.querySelector('.vote-list');
 
   function formatTimestamp(ts) {
     return new Date(ts + 'Z').toLocaleString();
@@ -51,8 +67,11 @@
     document.querySelector('.vote-error').textContent = message;
   }
 
-  function voteComplete() {
+  function voteComplete(value) {
     document.querySelector('.vote-form').style.display = 'none';
+    const voteRow = document.createElement('li');
+    voteRow.textContent = value === 1 ? 'yay' : 'nay';
+    voteList.appendChild(voteRow);
   }
 
   function formaTimeResolutions() {
@@ -70,8 +89,8 @@
       formaTimeResolutions();
       return;
     }
-    const initiated = new Date('{{transaction.timestamp ~ 'Z'}}');
-    const resolveTime = new Date('{{transaction.timestamp ~ 'Z'}}');
+    const initiated = new Date('{{transaction.timestamp ~ ('Z' if not debug else '')}}');
+    const resolveTime = new Date('{{transaction.timestamp ~ ('Z' if not debug else '')}}');
     resolveTime.setTime(resolveTime.getTime() + (1000 * 60 * 5));
     console.log(initiated, resolveTime);
     let timer = setInterval(() => {
@@ -102,7 +121,7 @@
       {token, transactionId, value},
       'CreateVote'
       ).then((json) => {
-        voteComplete()
+        voteComplete(1);
       }).catch((json) => {
         setError(json.errors[0].message);
       });
@@ -120,7 +139,7 @@
       {token, transactionId, value},
       'CreateVote'
       ).then((json) => {
-        voteComplete()
+        voteComplete(-1);
       }).catch((json) => {
         setError(json.errors[0].message);
       });

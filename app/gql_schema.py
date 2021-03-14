@@ -97,7 +97,10 @@ class Query(graphene.ObjectType):
     transactions_for_goat = graphene.List(TransactionObject, goat_id=graphene.Int())
     def resolve_transactions_for_goat(self, info, **kwargs):
         goat_id = kwargs['goat_id']
-        return Transaction.query.filter_by(goat_id=goat_id).all()
+        return Transaction.query.filter_by(
+            goat_id=goat_id,
+            status=TransactionStatus.APPROVED.value) \
+        .all()
 
     # VOTEs
     votes_for_transaction = graphene.List(VoteObject, transaction_id=graphene.Int())
@@ -298,13 +301,14 @@ class TakeGoat(graphene.Mutation):
 class StartTransaction(graphene.Mutation):
     class Arguments:
         token = graphene.String()
+        reason = graphene.String()
         from_user = graphene.Int()
         goat_id = graphene.Int()
 
     transaction = graphene.Field(TransactionObject)
 
     @mutation_jwt_required
-    def mutate(self, info, from_user, goat_id):
+    def mutate(self, info, reason, from_user, goat_id):
         name = get_jwt_identity()
         goat = Goat.query.filter_by(goat_id=goat_id).first()
         to_user = User.query.filter_by(name=name.lower()).first()
@@ -317,8 +321,15 @@ class StartTransaction(graphene.Mutation):
         if len(existing_transactions) > 0:
             raise GraphQLError('There already exists a transaction for this goat')
 
+        reason = reason.strip()
+        if len(reason) < 12:
+            raise GraphQLError('You need to provide a better reason')
+
+        if len(reason) > 128:
+            raise GraphQLError('Reason too long')
+
         # create transaction
-        new_transaction = Transaction(from_user, to_user.user_id, goat_id)
+        new_transaction = Transaction(from_user, to_user.user_id, goat_id, reason)
         db.session.add(new_transaction)
 
         # commit

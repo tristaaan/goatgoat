@@ -83,6 +83,7 @@ def transaction_page(tid):
       has_voted = False
     return render_template('transaction-page.html',
       name=name,
+      debug=current_app.debug,
       transaction=transaction,
       has_voted=has_voted,
       logged_in=(data is not None)

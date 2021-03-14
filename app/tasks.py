@@ -32,7 +32,7 @@ def transaction_completion(transaction_id):
 
     # transfer goat if vote successful
     if next_status == TransactionStatus.APPROVED:
-        logger.info(f'transfering goat: "{transaction.goat_id}"')
+        logger.info(f'transfering goat: "{transaction_id}/{transaction.goat_id}"')
         goat = Goat.query.filter_by(goat_id=transaction.goat_id).first()
         goat.owner_id = transaction.to_user_id
 
@@ -41,5 +41,3 @@ def transaction_completion(transaction_id):
     except IntegrityError as e:
         db.session.rollback()
         logger.error(f'Error with transaction completion: {e}')
-
-    logger.info('complete')
