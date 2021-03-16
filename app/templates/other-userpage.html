@@ -62,6 +62,7 @@
     sendQuery(
       `{
         transactionsForGoat(goatId: ${selectedGoatId}) {
+          transactionId
           fromUser { name }
           timestamp
           reason
@@ -72,9 +73,18 @@
         transactionRow.style.display = 'none';
         return;
       }
-      const {fromUser, timestamp, reason} = json.data.transactionsForGoat[0];
+      const transactions = json.data.transactionsForGoat.sort((a, b) => {
+        return Date.parse(b.resolved) - Date.parse(a.resolved);
+      });
+      const {transactionId, fromUser, timestamp, reason} = transactions[0];
       transactionRow.style.display = 'block';
-      transactionDateLabel.textContent = `${formatTimestamp(timestamp)}`;
+      while (transactionDateLabel.firstChild) {
+        transactionDateLabel.removeChild(transactionDateLabel.firstChild);
+      }
+      const a = document.createElement('a');
+      a.href = `/transaction/${transactionId}`;
+      a.textContent = `${formatTimestamp(timestamp)}`;
+      transactionDateLabel.appendChild(a);
       if (reason && reason.length) {
         transactionReason.textContent = `"${reason}"`;
       }
