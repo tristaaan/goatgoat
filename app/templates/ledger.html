@@ -47,7 +47,7 @@
     firstHeader.appendChild(makeCell(`${months[currentMonth]} ${currentDay}`, 'th'));
     ledger.appendChild(firstHeader);
     for ({transactionId, status, fromUser, toUser, timestamp} of transactions) {
-      const date = new Date(timestamp);
+      const date = new Date(timestamp + 'Z');
       if (date.getDate() != currentDay || date.getMonth() != currentMonth) {
         currentDay = date.getDate();
         currentMonth = date.getMonth();
