@@ -29,3 +29,7 @@ nav ul li {
   text-decoration: underline;
   text-transform: capitalize;
 }
+
+th {
+  text-align: left;
+}
