@@ -25,24 +25,48 @@
       }
     }}`)
     .then((json) => {
-      const transactions = json.data.allTransactions.edges;
-      for ({node} of transactions) {
-        const {transactionId, status, fromUser, toUser, timestamp} = node;
-        const tr = document.createElement("tr");
-        tr.appendChild(makeNameLinkCell(toUser.name));
-        tr.appendChild(makeCell('<-'));
-        tr.appendChild(makeNameLinkCell(fromUser.name));
-        tr.appendChild(makeCell(formatTimestamp(timestamp)));
-        tr.appendChild(makeTransactionLinkCell(transactionId, status));
-        ledger.appendChild(tr);
-      }
+      const transactions = json.data.allTransactions.edges.map(({node}) => node);
+      makeLedgerTable(transactions);
     })
     .catch((json) => {
       console.log(json);
     });
 
-  function makeCell(contents) {
-    const cell = document.createElement('td');
+  const months = [
+    'January', 'February', 'March',
+    'April', 'May', 'June',
+    'July', 'August', 'September',
+    'October', 'November', 'December'
+  ];
+
+  function makeLedgerTable(transactions) {
+    const firstDate = new Date(transactions[0].timestamp + 'Z');
+    let currentDay = firstDate.getDate();
+    let currentMonth = firstDate.getMonth();
+    const firstHeader = document.createElement("tr");
+    firstHeader.appendChild(makeCell(`${months[currentMonth]} ${currentDay}`, 'th'));
+    ledger.appendChild(firstHeader);
+    for ({transactionId, status, fromUser, toUser, timestamp} of transactions) {
+      const date = new Date(timestamp);
+      if (date.getDate() != currentDay || date.getMonth() != currentMonth) {
+        currentDay = date.getDate();
+        currentMonth = date.getMonth();
+        const header = document.createElement("tr");
+        header.appendChild(makeCell(`${months[currentMonth]} ${currentDay}`, 'th'));
+        ledger.appendChild(header);
+      }
+      const tr = document.createElement("tr");
+      tr.appendChild(makeNameLinkCell(toUser.name));
+      tr.appendChild(makeCell('<-'));
+      tr.appendChild(makeNameLinkCell(fromUser.name));
+      tr.appendChild(makeCell(formatTimestamp(timestamp)));
+      tr.appendChild(makeTransactionLinkCell(transactionId, status));
+      ledger.appendChild(tr);
+    }
+  }
+
+  function makeCell(contents, type='td') {
+    const cell = document.createElement(type);
     cell.textContent = contents;
     return cell;
   }
