@@ -7,8 +7,16 @@ body {
   flex-direction: column;
 }
 
+nav ul {
+  padding-left: 0;
+}
+
 nav ul li {
   display: inline-block;
+}
+
+main {
+  max-width: 500px;
 }
 
 .settings-cell {

@@ -65,6 +65,7 @@
           transactionId
           fromUser { name }
           timestamp
+          resolved
           reason
         }
       }`
@@ -87,6 +88,8 @@
       transactionDateLabel.appendChild(a);
       if (reason && reason.length) {
         transactionReason.textContent = `"${reason}"`;
+      } else {
+        transactionReason.textContent = '';
       }
       const {name} = fromUser;
       transactionUserLabel.textContent = name;
